@@ -9,6 +9,10 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { Login } from "@/pages/Login";
 import { Dashboard } from "@/pages/Dashboard";
+import { FlowerMessages } from "@/pages/FlowerMessages";
+import { LeafMessages } from "@/pages/LeafMessages";
+import { AdminAccounts } from "@/pages/AdminAccounts";
+import { Logs } from "@/pages/Logs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,7 +36,10 @@ const App = () => (
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-              {/* TODO: 다른 페이지들 추가 예정 */}
+              <Route path="flower-messages" element={<FlowerMessages />} />
+              <Route path="leaf-messages" element={<LeafMessages />} />
+              <Route path="admin-accounts" element={<AdminAccounts />} />
+              <Route path="logs" element={<Logs />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

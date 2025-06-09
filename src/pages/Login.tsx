@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { AdminAccount } from '@/types/admin';
 
 export const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -25,8 +26,8 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await apiClient.login({ username, password });
-      login(response); // 백엔드에서 사용자 정보를 반환한다고 가정
+      const response = await apiClient.login({ username, password }) as AdminAccount;
+      login(response);
       toast({
         title: '로그인 성공',
         description: '관리자 페이지에 오신 것을 환영합니다.',

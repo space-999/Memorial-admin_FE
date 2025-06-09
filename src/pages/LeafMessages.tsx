@@ -1,0 +1,161 @@
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { apiClient } from '@/lib/api';
+import { LeafMessage } from '@/types/admin';
+import { useToast } from '@/hooks/use-toast';
+import { Trash2, Download } from 'lucide-react';
+
+export const LeafMessages: React.FC = () => {
+  const [messages, setMessages] = useState<LeafMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const fetchMessages = async () => {
+    try {
+      setLoading(true);
+      const data = await apiClient.getLeafMessages() as LeafMessage[];
+      setMessages(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Failed to fetch leaf messages:', error);
+      toast({
+        title: '오류',
+        description: '나뭇잎 메시지를 불러오는데 실패했습니다.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (messageId: number) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
+    try {
+      await apiClient.deleteLeafMessage(messageId);
+      toast({
+        title: '삭제 완료',
+        description: '나뭇잎 메시지가 삭제되었습니다.',
+      });
+      fetchMessages();
+    } catch (error) {
+      console.error('Failed to delete message:', error);
+      toast({
+        title: '삭제 실패',
+        description: '메시지 삭제에 실패했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDownloadExcel = async () => {
+    try {
+      const blob = await apiClient.downloadMessagesExcel();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `messages_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: '다운로드 완료',
+        description: '메시지 목록이 엑셀 파일로 다운로드되었습니다.',
+      });
+    } catch (error) {
+      console.error('Failed to download excel:', error);
+      toast({
+        title: '다운로드 실패',
+        description: '엑셀 다운로드에 실패했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">나뭇잎 메시지 관리</h1>
+          <Button disabled>
+            <Download className="mr-2 h-4 w-4" />
+            엑셀 다운로드
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="p-6">
+            <div className="animate-pulse space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-12 bg-muted rounded"></div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold">나뭇잎 메시지 관리</h1>
+          <p className="text-muted-foreground">추모의 정원에 등록된 나뭇잎 메시지를 관리합니다.</p>
+        </div>
+        <Button onClick={handleDownloadExcel}>
+          <Download className="mr-2 h-4 w-4" />
+          엑셀 다운로드
+        </Button>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>나뭇잎 메시지 목록</CardTitle>
+          <CardDescription>
+            총 {messages.length}개의 메시지가 등록되어 있습니다.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>작성자</TableHead>
+                <TableHead>내용</TableHead>
+                <TableHead>작성일</TableHead>
+                <TableHead>작업</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {messages.map((message) => (
+                <TableRow key={message.messageId}>
+                  <TableCell>{message.messageId}</TableCell>
+                  <TableCell>{message.authorName}</TableCell>
+                  <TableCell className="max-w-xs truncate">{message.content}</TableCell>
+                  <TableCell>{new Date(message.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDelete(message.messageId)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};

@@ -5,12 +5,49 @@ import { AdminAccount } from '@/types/admin';
 interface AuthContextType {
   user: AdminAccount | null;
   isAuthenticated: boolean;
-  login: (user: AdminAccount) => void;
+  login: (userData: AdminAccount) => void;
   logout: () => void;
-  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AdminAccount | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // 페이지 새로고침 시 로컬 스토리지에서 사용자 정보 복원
+    const savedUser = localStorage.getItem('admin_user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setUser(userData);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error('Failed to parse saved user data:', error);
+        localStorage.removeItem('admin_user');
+      }
+    }
+  }, []);
+
+  const login = (userData: AdminAccount) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    localStorage.setItem('admin_user', JSON.stringify(userData));
+  };
+
+  const logout = () => {
+    setUser(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem('admin_user');
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -18,38 +55,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AdminAccount | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // 새로고침 시 로그인 상태 확인
-    const savedUser = localStorage.getItem('adminUser');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setLoading(false);
-  }, []);
-
-  const login = (userData: AdminAccount) => {
-    setUser(userData);
-    localStorage.setItem('adminUser', JSON.stringify(userData));
-  };
-
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('adminUser');
-  };
-
-  const value = {
-    user,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    loading,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -11,7 +11,7 @@ interface AdminAccountDialogProps {
   account: AdminAccount | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: Partial<AdminAccount>) => Promise<void>;
+  onSave: (data: any) => Promise<void>;
   isCreating: boolean;
 }
 
@@ -23,30 +23,30 @@ export const AdminAccountDialog: React.FC<AdminAccountDialogProps> = ({
   isCreating,
 }) => {
   const [formData, setFormData] = useState({
-    username: '',
-    name: '',
-    email: '',
-    role: 'ADMIN',
-    password: '',
+    adminId: '',
+    adminNickName: '',
+    adminGrade: 0,
+    adminPhone: '',
+    adminPwd: '',
   });
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (account) {
       setFormData({
-        username: account.username,
-        name: account.name,
-        email: account.email,
-        role: account.role,
-        password: '',
+        adminId: account.adminId,
+        adminNickName: account.adminNickName,
+        adminGrade: account.adminGrade,
+        adminPhone: account.adminPhone || '',
+        adminPwd: '',
       });
     } else {
       setFormData({
-        username: '',
-        name: '',
-        email: '',
-        role: 'ADMIN',
-        password: '',
+        adminId: '',
+        adminNickName: '',
+        adminGrade: 0,
+        adminPhone: '',
+        adminPwd: '',
       });
     }
   }, [account, isCreating]);
@@ -61,6 +61,16 @@ export const AdminAccountDialog: React.FC<AdminAccountDialogProps> = ({
     }
   };
 
+  const getGradeName = (grade: number): string => {
+    switch (grade) {
+      case 0: return 'VIEWER';
+      case 1: return 'EDITOR';
+      case 2: return 'MANAGER';
+      case 3: return 'SUPER_ADMIN';
+      default: return 'UNKNOWN';
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -71,58 +81,65 @@ export const AdminAccountDialog: React.FC<AdminAccountDialogProps> = ({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">아이디</Label>
+            <Label htmlFor="adminId">아이디</Label>
             <Input
-              id="username"
-              value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              id="adminId"
+              value={formData.adminId}
+              onChange={(e) => setFormData({ ...formData, adminId: e.target.value })}
               required
               disabled={!isCreating}
+              minLength={4}
+              maxLength={20}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">이름</Label>
+            <Label htmlFor="adminNickName">닉네임</Label>
             <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              id="adminNickName"
+              value={formData.adminNickName}
+              onChange={(e) => setFormData({ ...formData, adminNickName: e.target.value })}
               required
+              maxLength={16}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">이메일</Label>
+            <Label htmlFor="adminPhone">연락처</Label>
             <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              required
+              id="adminPhone"
+              value={formData.adminPhone}
+              onChange={(e) => setFormData({ ...formData, adminPhone: e.target.value })}
+              placeholder="010-0000-0000"
+              maxLength={20}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">역할</Label>
+            <Label htmlFor="adminGrade">등급</Label>
             <Select
-              value={formData.role}
-              onValueChange={(value) => setFormData({ ...formData, role: value })}
+              value={formData.adminGrade.toString()}
+              onValueChange={(value) => setFormData({ ...formData, adminGrade: parseInt(value) })}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="ADMIN">관리자</SelectItem>
-                <SelectItem value="SUPER_ADMIN">최고관리자</SelectItem>
+                <SelectItem value="0">VIEWER (0)</SelectItem>
+                <SelectItem value="1">EDITOR (1)</SelectItem>
+                <SelectItem value="2">MANAGER (2)</SelectItem>
+                <SelectItem value="3">SUPER_ADMIN (3)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           {isCreating && (
             <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
+              <Label htmlFor="adminPwd">비밀번호</Label>
               <Input
-                id="password"
+                id="adminPwd"
                 type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                value={formData.adminPwd}
+                onChange={(e) => setFormData({ ...formData, adminPwd: e.target.value })}
                 required={isCreating}
+                placeholder="영문+숫자 8-50자"
+                pattern="^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,50}$"
               />
             </div>
           )}

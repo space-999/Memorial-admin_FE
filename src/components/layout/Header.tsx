@@ -13,7 +13,7 @@ export const Header: React.FC = () => {
       
       <div className="flex items-center space-x-4">
         <span className="text-sm text-muted-foreground">
-          안녕하세요, {user?.name}님
+          안녕하세요, {user?.adminNickName}님
         </span>
       </div>
     </header>

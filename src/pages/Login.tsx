@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { AdminLoginResponse } from '@/types/admin';
+import { AdminAccount } from '@/types/admin';
 
 export const Login: React.FC = () => {
   const [adminId, setAdminId] = useState('');
@@ -29,15 +29,18 @@ export const Login: React.FC = () => {
       const response = await apiClient.login({ adminId, adminPwd });
       
       if (response.success && response.data) {
-        // API 응답 데이터를 기존 AuthContext와 호환되도록 변환
-        const userData = {
-          adminIndex: 0, // API 응답에 없으므로 임시값
-          username: response.data.adminId,
-          name: response.data.adminNickName,
-          email: '', // API 응답에 없으므로 빈값
-          role: response.data.adminGrade.toString(),
-          createdAt: '',
-          lastLoginAt: response.data.lastLoginTime,
+        // API 응답 데이터를 AdminAccount 타입에 맞게 변환
+        const userData: AdminAccount = {
+          adminIndex: 0, // API 응답에 없으므로 임시값 (실제로는 세션에서 가져와야 함)
+          adminId: response.data.adminId,
+          adminNickName: response.data.adminNickName,
+          adminGrade: response.data.adminGrade,
+          adminPhone: '', // API 응답에 없으므로 빈값
+          accountNonLocked: true, // 로그인 성공했으므로 true
+          lastLoginTime: response.data.lastLoginTime,
+          loginFailCnt: '0', // 로그인 성공했으므로 '0'
+          adminCreateTime: '', // API 응답에 없으므로 빈값
+          adminPwdChgTime: '', // API 응답에 없으므로 빈값
         };
         
         login(userData);

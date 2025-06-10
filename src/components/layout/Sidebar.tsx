@@ -41,6 +41,16 @@ export const Sidebar: React.FC = () => {
     }
   };
 
+  const getGradeName = (grade: number): string => {
+    switch (grade) {
+      case 0: return 'VIEWER';
+      case 1: return 'EDITOR';
+      case 2: return 'MANAGER';
+      case 3: return 'SUPER_ADMIN';
+      default: return 'UNKNOWN';
+    }
+  };
+
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r">
       {/* Logo */}
@@ -72,8 +82,13 @@ export const Sidebar: React.FC = () => {
       {/* User Info & Logout */}
       <div className="border-t p-4">
         <div className="mb-3 rounded-lg bg-muted p-3">
-          <p className="text-sm font-medium">{user?.name}</p>
-          <p className="text-xs text-muted-foreground">{user?.email}</p>
+          <p className="text-sm font-medium">{user?.adminNickName}</p>
+          <p className="text-xs text-muted-foreground">
+            {user ? getGradeName(user.adminGrade) : ''}
+          </p>
+          {user?.adminPhone && (
+            <p className="text-xs text-muted-foreground">{user.adminPhone}</p>
+          )}
         </div>
         <Button
           variant="outline"

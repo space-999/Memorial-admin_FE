@@ -1,19 +1,21 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AdminAccount } from '@/types/admin';
+import { AdminAccountResponseDto } from '@/types/admin';
 
 interface AuthContextType {
-  user: AdminAccount | null;
+  user: AdminAccountResponseDto | null;
   isAuthenticated: boolean;
-  login: (userData: AdminAccount) => void;
+  loading: boolean;
+  login: (userData: AdminAccountResponseDto) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AdminAccount | null>(null);
+  const [user, setUser] = useState<AdminAccountResponseDto | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // 페이지 새로고침 시 로컬 스토리지에서 사용자 정보 복원
@@ -28,9 +30,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('admin_user');
       }
     }
+    setLoading(false);
   }, []);
 
-  const login = (userData: AdminAccount) => {
+  const login = (userData: AdminAccountResponseDto) => {
     setUser(userData);
     setIsAuthenticated(true);
     localStorage.setItem('admin_user', JSON.stringify(userData));
@@ -43,7 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

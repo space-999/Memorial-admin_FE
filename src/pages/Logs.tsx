@@ -4,15 +4,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiClient } from '@/lib/api';
-import { AdminLoginHistory, AdminActivityHistory, AdminLogSearchCondition } from '@/types/admin';
+import { AdminLoginHistResponseDto, AdminActHistResponseDto, AdminLogSearchConditionDto } from '@/types/admin';
 import { useToast } from '@/hooks/use-toast';
+import { LogSearchFilters } from '@/components/LogSearchFilters';
 
 export const Logs: React.FC = () => {
-  const [loginLogs, setLoginLogs] = useState<AdminLoginHistory[]>([]);
-  const [activityLogs, setActivityLogs] = useState<AdminActivityHistory[]>([]);
+  const [loginLogs, setLoginLogs] = useState<AdminLoginHistResponseDto[]>([]);
+  const [activityLogs, setActivityLogs] = useState<AdminActHistResponseDto[]>([]);
   const [loginLoading, setLoginLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(true);
   const { toast } = useToast();
+
+  // 로그인 로그 검색 필터
+  const [loginAdminId, setLoginAdminId] = useState('');
+  const [loginStartDate, setLoginStartDate] = useState('');
+  const [loginEndDate, setLoginEndDate] = useState('');
+  const [loginIpAddress, setLoginIpAddress] = useState('');
+
+  // 활동 로그 검색 필터
+  const [activityAdminId, setActivityAdminId] = useState('');
+  const [activityStartDate, setActivityStartDate] = useState('');
+  const [activityEndDate, setActivityEndDate] = useState('');
+  const [activityIpAddress, setActivityIpAddress] = useState('');
+  const [actType, setActType] = useState('');
 
   useEffect(() => {
     fetchLoginLogs();
@@ -22,7 +36,12 @@ export const Logs: React.FC = () => {
   const fetchLoginLogs = async () => {
     try {
       setLoginLoading(true);
-      const condition: AdminLogSearchCondition = {};
+      const condition: AdminLogSearchConditionDto = {
+        adminId: loginAdminId || undefined,
+        startDate: loginStartDate || undefined,
+        endDate: loginEndDate || undefined,
+        ipAddress: loginIpAddress || undefined
+      };
       const response = await apiClient.getLoginLogs(condition);
       if (response.success && response.data) {
         setLoginLogs(response.data.content || []);
@@ -42,7 +61,13 @@ export const Logs: React.FC = () => {
   const fetchActivityLogs = async () => {
     try {
       setActivityLoading(true);
-      const condition: AdminLogSearchCondition = {};
+      const condition: AdminLogSearchConditionDto = {
+        adminId: activityAdminId || undefined,
+        startDate: activityStartDate || undefined,
+        endDate: activityEndDate || undefined,
+        ipAddress: activityIpAddress || undefined,
+        actType: actType || undefined
+      };
       const response = await apiClient.getActivityLogs(condition);
       if (response.success && response.data) {
         setActivityLogs(response.data.content || []);
@@ -59,6 +84,35 @@ export const Logs: React.FC = () => {
     }
   };
 
+  const handleLoginLogSearch = () => {
+    fetchLoginLogs();
+  };
+
+  const handleLoginLogReset = () => {
+    setLoginAdminId('');
+    setLoginStartDate('');
+    setLoginEndDate('');
+    setLoginIpAddress('');
+    setTimeout(() => {
+      fetchLoginLogs();
+    }, 100);
+  };
+
+  const handleActivityLogSearch = () => {
+    fetchActivityLogs();
+  };
+
+  const handleActivityLogReset = () => {
+    setActivityAdminId('');
+    setActivityStartDate('');
+    setActivityEndDate('');
+    setActivityIpAddress('');
+    setActType('');
+    setTimeout(() => {
+      fetchActivityLogs();
+    }, 100);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -73,11 +127,24 @@ export const Logs: React.FC = () => {
         </TabsList>
 
         <TabsContent value="login">
+          <LogSearchFilters
+            adminId={loginAdminId}
+            onAdminIdChange={setLoginAdminId}
+            startDate={loginStartDate}
+            onStartDateChange={setLoginStartDate}
+            endDate={loginEndDate}
+            onEndDateChange={setLoginEndDate}
+            ipAddress={loginIpAddress}
+            onIpAddressChange={setLoginIpAddress}
+            onSearch={handleLoginLogSearch}
+            onReset={handleLoginLogReset}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle>로그인 기록</CardTitle>
               <CardDescription>
-                관리자 로그인 기록을 확인할 수 있습니다.
+                관리자 로그인 기록을 확인할 수 있습니다. (총 {loginLogs.length}건)
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -120,11 +187,27 @@ export const Logs: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="activity">
+          <LogSearchFilters
+            adminId={activityAdminId}
+            onAdminIdChange={setActivityAdminId}
+            startDate={activityStartDate}
+            onStartDateChange={setActivityStartDate}
+            endDate={activityEndDate}
+            onEndDateChange={setActivityEndDate}
+            ipAddress={activityIpAddress}
+            onIpAddressChange={setActivityIpAddress}
+            actType={actType}
+            onActTypeChange={setActType}
+            onSearch={handleActivityLogSearch}
+            onReset={handleActivityLogReset}
+            showActType={true}
+          />
+
           <Card>
             <CardHeader>
               <CardTitle>활동 로그</CardTitle>
               <CardDescription>
-                관리자의 시스템 활동 내역을 확인할 수 있습니다.
+                관리자의 시스템 활동 내역을 확인할 수 있습니다. (총 {activityLogs.length}건)
               </CardDescription>
             </CardHeader>
             <CardContent>

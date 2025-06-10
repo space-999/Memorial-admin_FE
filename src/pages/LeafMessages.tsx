@@ -5,14 +5,21 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api';
-import { LeafMessage, AdminMessageSearchCondition } from '@/types/admin';
+import { AdminLeafMessageResponseDto, AdminMessageSearchConditionDto } from '@/types/admin';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Download } from 'lucide-react';
+import { SearchFilters } from '@/components/SearchFilters';
 
 export const LeafMessages: React.FC = () => {
-  const [messages, setMessages] = useState<LeafMessage[]>([]);
+  const [messages, setMessages] = useState<AdminLeafMessageResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  // 검색 필터 상태
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('N');
 
   useEffect(() => {
     fetchMessages();
@@ -21,9 +28,12 @@ export const LeafMessages: React.FC = () => {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const condition: AdminMessageSearchCondition = {
+      const condition: AdminMessageSearchConditionDto = {
         messageType: 'LEAF',
-        deleteFlag: 'N'
+        deleteFlag: deleteFlag || undefined,
+        searchKeyword: searchKeyword || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
       };
       const response = await apiClient.getLeafMessages(condition);
       if (response.success && response.data) {
@@ -39,6 +49,21 @@ export const LeafMessages: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = () => {
+    fetchMessages();
+  };
+
+  const handleReset = () => {
+    setSearchKeyword('');
+    setStartDate('');
+    setEndDate('');
+    setDeleteFlag('N');
+    // 초기화 후 다시 검색
+    setTimeout(() => {
+      fetchMessages();
+    }, 100);
   };
 
   const handleDelete = async (messageId: number) => {
@@ -67,8 +92,12 @@ export const LeafMessages: React.FC = () => {
 
   const handleDownloadExcel = async () => {
     try {
-      const condition: AdminMessageSearchCondition = {
-        messageType: 'LEAF'
+      const condition: AdminMessageSearchConditionDto = {
+        messageType: 'LEAF',
+        searchKeyword: searchKeyword || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        deleteFlag: deleteFlag || undefined
       };
       const blob = await apiClient.downloadMessagesExcel(condition);
       const url = window.URL.createObjectURL(blob);
@@ -94,29 +123,6 @@ export const LeafMessages: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">나뭇잎 메시지 관리</h1>
-          <Button disabled>
-            <Download className="mr-2 h-4 w-4" />
-            엑셀 다운로드
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-muted rounded"></div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -130,6 +136,20 @@ export const LeafMessages: React.FC = () => {
         </Button>
       </div>
 
+      <SearchFilters
+        searchKeyword={searchKeyword}
+        onSearchKeywordChange={setSearchKeyword}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        deleteFlag={deleteFlag}
+        onDeleteFlagChange={(value) => setDeleteFlag(value as 'Y' | 'N' | '')}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        showDeleteFlag={true}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>나뭇잎 메시지 목록</CardTitle>
@@ -138,41 +158,49 @@ export const LeafMessages: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>내용</TableHead>
-                <TableHead>작성일</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>작업</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {messages.map((message) => (
-                <TableRow key={message.id}>
-                  <TableCell>{message.id}</TableCell>
-                  <TableCell className="max-w-xs truncate">{message.content}</TableCell>
-                  <TableCell>{new Date(message.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge variant={message.deleteFlag === 'N' ? 'default' : 'secondary'}>
-                      {message.deleteFlag === 'N' ? '표시' : '삭제됨'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(message.id)}
-                      disabled={message.deleteFlag === 'Y'}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-12 bg-muted rounded"></div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>내용</TableHead>
+                  <TableHead>작성일</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>작업</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages.map((message) => (
+                  <TableRow key={message.id}>
+                    <TableCell>{message.id}</TableCell>
+                    <TableCell className="max-w-xs truncate">{message.content}</TableCell>
+                    <TableCell>{new Date(message.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge variant={message.deleteFlag === 'N' ? 'default' : 'secondary'}>
+                        {message.deleteFlag === 'N' ? '표시' : '삭제됨'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDelete(message.id)}
+                        disabled={message.deleteFlag === 'Y'}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

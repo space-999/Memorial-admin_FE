@@ -5,17 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api';
-import { FlowerMessage, AdminMessageSearchCondition } from '@/types/admin';
+import { AdminFlowerMessageResponseDto, AdminMessageSearchConditionDto } from '@/types/admin';
 import { useToast } from '@/hooks/use-toast';
 import { Edit, Trash2, Download } from 'lucide-react';
 import { FlowerMessageDialog } from '@/components/FlowerMessageDialog';
+import { SearchFilters } from '@/components/SearchFilters';
 
 export const FlowerMessages: React.FC = () => {
-  const [messages, setMessages] = useState<FlowerMessage[]>([]);
+  const [messages, setMessages] = useState<AdminFlowerMessageResponseDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingMessage, setEditingMessage] = useState<FlowerMessage | null>(null);
+  const [editingMessage, setEditingMessage] = useState<AdminFlowerMessageResponseDto | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  // 검색 필터 상태
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('N');
 
   useEffect(() => {
     fetchMessages();
@@ -24,12 +31,17 @@ export const FlowerMessages: React.FC = () => {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const condition: AdminMessageSearchCondition = {
+      const condition: AdminMessageSearchConditionDto = {
         messageType: 'FLOWER',
-        deleteFlag: 'N'
+        deleteFlag: deleteFlag || undefined,
+        searchKeyword: searchKeyword || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
       };
       const response = await apiClient.getFlowerMessages(condition);
-      setMessages(response.content || []);
+      if (response.success && response.data) {
+        setMessages(response.data.content || []);
+      }
     } catch (error) {
       console.error('Failed to fetch flower messages:', error);
       toast({
@@ -42,7 +54,22 @@ export const FlowerMessages: React.FC = () => {
     }
   };
 
-  const handleEdit = (message: FlowerMessage) => {
+  const handleSearch = () => {
+    fetchMessages();
+  };
+
+  const handleReset = () => {
+    setSearchKeyword('');
+    setStartDate('');
+    setEndDate('');
+    setDeleteFlag('N');
+    // 초기화 후 다시 검색
+    setTimeout(() => {
+      fetchMessages();
+    }, 100);
+  };
+
+  const handleEdit = (message: AdminFlowerMessageResponseDto) => {
     setEditingMessage(message);
     setDialogOpen(true);
   };
@@ -73,8 +100,12 @@ export const FlowerMessages: React.FC = () => {
 
   const handleDownloadExcel = async () => {
     try {
-      const condition: AdminMessageSearchCondition = {
-        messageType: 'FLOWER'
+      const condition: AdminMessageSearchConditionDto = {
+        messageType: 'FLOWER',
+        searchKeyword: searchKeyword || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        deleteFlag: deleteFlag || undefined
       };
       const blob = await apiClient.downloadMessagesExcel(condition);
       const url = window.URL.createObjectURL(blob);
@@ -126,29 +157,6 @@ export const FlowerMessages: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">꽃 메시지 관리</h1>
-          <Button disabled>
-            <Download className="mr-2 h-4 w-4" />
-            엑셀 다운로드
-          </Button>
-        </div>
-        <Card>
-          <CardContent className="p-6">
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-12 bg-muted rounded"></div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -162,6 +170,20 @@ export const FlowerMessages: React.FC = () => {
         </Button>
       </div>
 
+      <SearchFilters
+        searchKeyword={searchKeyword}
+        onSearchKeywordChange={setSearchKeyword}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        deleteFlag={deleteFlag}
+        onDeleteFlagChange={(value) => setDeleteFlag(value as 'Y' | 'N' | '')}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        showDeleteFlag={true}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>꽃 메시지 목록</CardTitle>
@@ -170,51 +192,59 @@ export const FlowerMessages: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>내용</TableHead>
-                <TableHead>작성일</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>작업</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {messages.map((message) => (
-                <TableRow key={message.id}>
-                  <TableCell>{message.id}</TableCell>
-                  <TableCell className="max-w-xs truncate">{message.content}</TableCell>
-                  <TableCell>{new Date(message.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge variant={message.deleteFlag === 'N' ? 'default' : 'secondary'}>
-                      {message.deleteFlag === 'N' ? '표시' : '삭제됨'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(message)}
-                        disabled={message.deleteFlag === 'Y'}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(message.id)}
-                        disabled={message.deleteFlag === 'Y'}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-12 bg-muted rounded"></div>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>내용</TableHead>
+                  <TableHead>작성일</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>작업</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages.map((message) => (
+                  <TableRow key={message.id}>
+                    <TableCell>{message.id}</TableCell>
+                    <TableCell className="max-w-xs truncate">{message.content}</TableCell>
+                    <TableCell>{new Date(message.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Badge variant={message.deleteFlag === 'N' ? 'default' : 'secondary'}>
+                        {message.deleteFlag === 'N' ? '표시' : '삭제됨'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(message)}
+                          disabled={message.deleteFlag === 'Y'}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDelete(message.id)}
+                          disabled={message.deleteFlag === 'Y'}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 

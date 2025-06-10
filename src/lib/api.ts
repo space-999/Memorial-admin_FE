@@ -78,21 +78,21 @@ class ApiClient {
   }
 
   // Flower Messages APIs
-  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<PageResponse<FlowerMessage>> {
+  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponse<FlowerMessage>>> {
     const params = new URLSearchParams();
     
-    // 검색 조건 추가
-    if (condition.searchKeyword) params.append('condition.searchKeyword', condition.searchKeyword);
-    if (condition.startDate) params.append('condition.startDate', condition.startDate);
-    if (condition.endDate) params.append('condition.endDate', condition.endDate);
-    if (condition.messageType) params.append('condition.messageType', condition.messageType);
-    if (condition.deleteFlag) params.append('condition.deleteFlag', condition.deleteFlag);
+    // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)
+    if (condition.searchKeyword) params.append('searchKeyword', condition.searchKeyword);
+    if (condition.startDate) params.append('startDate', condition.startDate);
+    if (condition.endDate) params.append('endDate', condition.endDate);
+    if (condition.messageType) params.append('messageType', condition.messageType);
+    if (condition.deleteFlag) params.append('deleteFlag', condition.deleteFlag);
     
     // 페이징 정보 추가
-    params.append('pageable.page', pageable.page.toString());
-    params.append('pageable.size', pageable.size.toString());
+    params.append('page', pageable.page.toString());
+    params.append('size', pageable.size.toString());
     if (pageable.sort) {
-      pageable.sort.forEach(s => params.append('pageable.sort', s));
+      pageable.sort.forEach(s => params.append('sort', s));
     }
 
     return this.request(`/admin/flower-messages?${params.toString()}`);
@@ -115,18 +115,18 @@ class ApiClient {
   async getLeafMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponse<LeafMessage>>> {
     const params = new URLSearchParams();
     
-    // 검색 조건 추가
-    if (condition.searchKeyword) params.append('condition.searchKeyword', condition.searchKeyword);
-    if (condition.startDate) params.append('condition.startDate', condition.startDate);
-    if (condition.endDate) params.append('condition.endDate', condition.endDate);
-    if (condition.messageType) params.append('condition.messageType', condition.messageType);
-    if (condition.deleteFlag) params.append('condition.deleteFlag', condition.deleteFlag);
+    // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)
+    if (condition.searchKeyword) params.append('searchKeyword', condition.searchKeyword);
+    if (condition.startDate) params.append('startDate', condition.startDate);
+    if (condition.endDate) params.append('endDate', condition.endDate);
+    if (condition.messageType) params.append('messageType', condition.messageType);
+    if (condition.deleteFlag) params.append('deleteFlag', condition.deleteFlag);
     
     // 페이징 정보 추가
-    params.append('pageable.page', pageable.page.toString());
-    params.append('pageable.size', pageable.size.toString());
+    params.append('page', pageable.page.toString());
+    params.append('size', pageable.size.toString());
     if (pageable.sort) {
-      pageable.sort.forEach(s => params.append('pageable.sort', s));
+      pageable.sort.forEach(s => params.append('sort', s));
     }
 
     return this.request(`/admin/leaf-messages?${params.toString()}`);
@@ -142,11 +142,12 @@ class ApiClient {
   async downloadMessagesExcel(condition: AdminMessageSearchCondition = {}): Promise<Blob> {
     const params = new URLSearchParams();
     
-    if (condition.searchKeyword) params.append('condition.searchKeyword', condition.searchKeyword);
-    if (condition.startDate) params.append('condition.startDate', condition.startDate);
-    if (condition.endDate) params.append('condition.endDate', condition.endDate);
-    if (condition.messageType) params.append('condition.messageType', condition.messageType);
-    if (condition.deleteFlag) params.append('condition.deleteFlag', condition.deleteFlag);
+    // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)
+    if (condition.searchKeyword) params.append('searchKeyword', condition.searchKeyword);
+    if (condition.startDate) params.append('startDate', condition.startDate);
+    if (condition.endDate) params.append('endDate', condition.endDate);
+    if (condition.messageType) params.append('messageType', condition.messageType);
+    if (condition.deleteFlag) params.append('deleteFlag', condition.deleteFlag);
 
     const response = await fetch(`${this.baseUrl}/admin/messages/excel?${params.toString()}`, {
       credentials: 'include',
@@ -209,17 +210,17 @@ class ApiClient {
   async getLoginLogs(condition: AdminLogSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponseWithSpring<AdminLoginHistory>>> {
     const params = new URLSearchParams();
     
-    // 검색 조건 추가
-    if (condition.adminId) params.append('condition.adminId', condition.adminId);
-    if (condition.startDate) params.append('condition.startDate', condition.startDate);
-    if (condition.endDate) params.append('condition.endDate', condition.endDate);
-    if (condition.ipAddress) params.append('condition.ipAddress', condition.ipAddress);
+    // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)
+    if (condition.adminId) params.append('adminId', condition.adminId);
+    if (condition.startDate) params.append('startDate', condition.startDate);
+    if (condition.endDate) params.append('endDate', condition.endDate);
+    if (condition.ipAddress) params.append('ipAddress', condition.ipAddress);
     
     // 페이징 정보 추가
-    params.append('pageable.page', pageable.page.toString());
-    params.append('pageable.size', pageable.size.toString());
+    params.append('page', pageable.page.toString());
+    params.append('size', pageable.size.toString());
     if (pageable.sort) {
-      pageable.sort.forEach(s => params.append('pageable.sort', s));
+      pageable.sort.forEach(s => params.append('sort', s));
     }
 
     return this.request(`/admin/logs/logins?${params.toString()}`);
@@ -228,18 +229,18 @@ class ApiClient {
   async getActivityLogs(condition: AdminLogSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponseWithSpring<AdminActivityHistory>>> {
     const params = new URLSearchParams();
     
-    // 검색 조건 추가
-    if (condition.adminId) params.append('condition.adminId', condition.adminId);
-    if (condition.startDate) params.append('condition.startDate', condition.startDate);
-    if (condition.endDate) params.append('condition.endDate', condition.endDate);
-    if (condition.ipAddress) params.append('condition.ipAddress', condition.ipAddress);
-    if (condition.actType) params.append('condition.actType', condition.actType);
+    // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)
+    if (condition.adminId) params.append('adminId', condition.adminId);
+    if (condition.startDate) params.append('startDate', condition.startDate);
+    if (condition.endDate) params.append('endDate', condition.endDate);
+    if (condition.ipAddress) params.append('ipAddress', condition.ipAddress);
+    if (condition.actType) params.append('actType', condition.actType);
     
     // 페이징 정보 추가
-    params.append('pageable.page', pageable.page.toString());
-    params.append('pageable.size', pageable.size.toString());
+    params.append('page', pageable.page.toString());
+    params.append('size', pageable.size.toString());
     if (pageable.sort) {
-      pageable.sort.forEach(s => params.append('pageable.sort', s));
+      pageable.sort.forEach(s => params.append('sort', s));
     }
 
     return this.request(`/admin/logs/activites?${params.toString()}`);

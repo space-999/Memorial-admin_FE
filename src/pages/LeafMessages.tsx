@@ -47,8 +47,8 @@ export const LeafMessages: React.FC = () => {
       const response = await apiClient.getLeafMessages(condition, pageable);
       console.log('Leaf messages response:', response);
       
-      if (response && response.content) {
-        setMessages(response.content);
+      if (response && response.success && response.data && response.data.content) {
+        setMessages(response.data.content);
       } else {
         console.log('No content in response or invalid response structure');
         setMessages([]);

@@ -7,8 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api';
 import { AdminAccount } from '@/types/admin';
 import { useToast } from '@/hooks/use-toast';
-import { Edit, Trash2, Plus, RotateCcw } from 'lucide-react';
+import { Edit, Trash2, Plus, RotateCcw, Unlock } from 'lucide-react';
 import { AdminAccountDialog } from '@/components/AdminAccountDialog';
+
+const getGradeName = (grade: number): string => {
+  switch (grade) {
+    case 0: return 'VIEWER';
+    case 1: return 'EDITOR';
+    case 2: return 'MANAGER';
+    case 3: return 'SUPER_ADMIN';
+    default: return 'UNKNOWN';
+  }
+};
 
 export const AdminAccounts: React.FC = () => {
   const [accounts, setAccounts] = useState<AdminAccount[]>([]);
@@ -25,8 +35,10 @@ export const AdminAccounts: React.FC = () => {
   const fetchAccounts = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getAdminAccounts() as AdminAccount[];
-      setAccounts(Array.isArray(data) ? data : []);
+      const response = await apiClient.getAdminAccounts();
+      if (response.success && response.data) {
+        setAccounts(response.data);
+      }
     } catch (error) {
       console.error('Failed to fetch admin accounts:', error);
       toast({
@@ -55,12 +67,16 @@ export const AdminAccounts: React.FC = () => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
     try {
-      await apiClient.deleteAdminAccount(adminIndex);
-      toast({
-        title: '삭제 완료',
-        description: '관리자 계정이 삭제되었습니다.',
-      });
-      fetchAccounts();
+      const response = await apiClient.deleteAdminAccount(adminIndex);
+      if (response.success) {
+        toast({
+          title: '삭제 완료',
+          description: '관리자 계정이 삭제되었습니다.',
+        });
+        fetchAccounts();
+      } else {
+        throw new Error(response.message || '삭제에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Failed to delete account:', error);
       toast({
@@ -75,11 +91,15 @@ export const AdminAccounts: React.FC = () => {
     if (!confirm('정말 비밀번호를 초기화하시겠습니까?')) return;
 
     try {
-      await apiClient.resetAdminPassword(adminIndex);
-      toast({
-        title: '초기화 완료',
-        description: '비밀번호가 초기화되었습니다.',
-      });
+      const response = await apiClient.resetAdminPassword(adminIndex);
+      if (response.success) {
+        toast({
+          title: '초기화 완료',
+          description: `비밀번호가 초기화되었습니다. 임시 비밀번호: ${response.data}`,
+        });
+      } else {
+        throw new Error(response.message || '초기화에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Failed to reset password:', error);
       toast({
@@ -90,20 +110,52 @@ export const AdminAccounts: React.FC = () => {
     }
   };
 
-  const handleSave = async (accountData: Partial<AdminAccount>) => {
+  const handleUnlock = async (adminIndex: number) => {
+    if (!confirm('정말 계정 잠금을 해제하시겠습니까?')) return;
+
+    try {
+      const response = await apiClient.unlockAdminAccount(adminIndex);
+      if (response.success) {
+        toast({
+          title: '잠금 해제 완료',
+          description: '계정 잠금이 해제되었습니다.',
+        });
+        fetchAccounts();
+      } else {
+        throw new Error(response.message || '잠금 해제에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('Failed to unlock account:', error);
+      toast({
+        title: '잠금 해제 실패',
+        description: '계정 잠금 해제에 실패했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSave = async (accountData: any) => {
     try {
       if (isCreating) {
-        await apiClient.createAdminAccount(accountData);
-        toast({
-          title: '생성 완료',
-          description: '관리자 계정이 생성되었습니다.',
-        });
+        const response = await apiClient.createAdminAccount(accountData);
+        if (response.success) {
+          toast({
+            title: '생성 완료',
+            description: '관리자 계정이 생성되었습니다.',
+          });
+        } else {
+          throw new Error(response.message || '생성에 실패했습니다.');
+        }
       } else if (editingAccount) {
-        await apiClient.updateAdminAccount(editingAccount.adminIndex, accountData);
-        toast({
-          title: '수정 완료',
-          description: '관리자 계정이 수정되었습니다.',
-        });
+        const response = await apiClient.updateAdminAccount(editingAccount.adminIndex, accountData);
+        if (response.success) {
+          toast({
+            title: '수정 완료',
+            description: '관리자 계정이 수정되었습니다.',
+          });
+        } else {
+          throw new Error(response.message || '수정에 실패했습니다.');
+        }
       }
       setDialogOpen(false);
       setEditingAccount(null);
@@ -166,11 +218,12 @@ export const AdminAccounts: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
+                <TableHead>인덱스</TableHead>
                 <TableHead>아이디</TableHead>
-                <TableHead>이름</TableHead>
-                <TableHead>이메일</TableHead>
-                <TableHead>역할</TableHead>
+                <TableHead>닉네임</TableHead>
+                <TableHead>등급</TableHead>
+                <TableHead>연락처</TableHead>
+                <TableHead>계정상태</TableHead>
                 <TableHead>생성일</TableHead>
                 <TableHead>마지막 로그인</TableHead>
                 <TableHead>작업</TableHead>
@@ -180,16 +233,21 @@ export const AdminAccounts: React.FC = () => {
               {accounts.map((account) => (
                 <TableRow key={account.adminIndex}>
                   <TableCell>{account.adminIndex}</TableCell>
-                  <TableCell>{account.username}</TableCell>
-                  <TableCell>{account.name}</TableCell>
-                  <TableCell>{account.email}</TableCell>
+                  <TableCell>{account.adminId}</TableCell>
+                  <TableCell>{account.adminNickName}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{account.role}</Badge>
+                    <Badge variant="outline">{getGradeName(account.adminGrade)}</Badge>
                   </TableCell>
-                  <TableCell>{new Date(account.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{account.adminPhone || '-'}</TableCell>
                   <TableCell>
-                    {account.lastLoginAt 
-                      ? new Date(account.lastLoginAt).toLocaleDateString()
+                    <Badge variant={account.accountNonLocked ? 'default' : 'destructive'}>
+                      {account.accountNonLocked ? '활성' : '잠김'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{new Date(account.adminCreateTime).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    {account.lastLoginTime 
+                      ? new Date(account.lastLoginTime).toLocaleDateString()
                       : '-'
                     }
                   </TableCell>
@@ -202,6 +260,15 @@ export const AdminAccounts: React.FC = () => {
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
+                      {!account.accountNonLocked && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleUnlock(account.adminIndex)}
+                        >
+                          <Unlock className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"

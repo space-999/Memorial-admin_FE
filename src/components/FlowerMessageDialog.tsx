@@ -2,17 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { FlowerMessage } from '@/types/admin';
 
 interface FlowerMessageDialogProps {
   message: FlowerMessage | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (data: Partial<FlowerMessage>) => Promise<void>;
+  onSave: (data: { content: string }) => Promise<void>;
 }
 
 export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
@@ -21,20 +19,12 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
   onOpenChange,
   onSave,
 }) => {
-  const [formData, setFormData] = useState({
-    content: '',
-    authorName: '',
-    isVisible: true,
-  });
+  const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (message) {
-      setFormData({
-        content: message.content,
-        authorName: message.authorName,
-        isVisible: message.isVisible,
-      });
+      setContent(message.content);
     }
   }, [message]);
 
@@ -42,7 +32,7 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
     e.preventDefault();
     setLoading(true);
     try {
-      await onSave(formData);
+      await onSave({ content });
     } finally {
       setLoading(false);
     }
@@ -56,31 +46,19 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="authorName">작성자명</Label>
-            <Input
-              id="authorName"
-              value={formData.authorName}
-              onChange={(e) => setFormData({ ...formData, authorName: e.target.value })}
-              required
-            />
-          </div>
-          <div className="space-y-2">
             <Label htmlFor="content">메시지 내용</Label>
             <Textarea
               id="content"
-              value={formData.content}
-              onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               rows={4}
+              maxLength={50}
+              placeholder="메시지 내용을 입력하세요 (최대 50자)"
               required
             />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isVisible"
-              checked={formData.isVisible}
-              onCheckedChange={(checked) => setFormData({ ...formData, isVisible: checked })}
-            />
-            <Label htmlFor="isVisible">메시지 표시</Label>
+            <div className="text-xs text-muted-foreground">
+              {content.length}/50자
+            </div>
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

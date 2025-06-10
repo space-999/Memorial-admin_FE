@@ -1,4 +1,25 @@
 
+import { 
+  AdminLoginRequest, 
+  AdminLoginResponse,
+  AdminAccount, 
+  FlowerMessage, 
+  LeafMessage,
+  AdminLoginHistory,
+  AdminActivityHistory,
+  AdminFlowerMessageUpdateRequest,
+  AdminAccountCreateRequest,
+  AdminAccountUpdateRequest,
+  AdminProfileUpdateRequest,
+  AdminPasswordUpdateRequest,
+  AdminMessageSearchCondition,
+  AdminLogSearchCondition,
+  Pageable,
+  ApiResponse,
+  PageResponse,
+  PageResponseWithSpring
+} from '@/types/admin';
+
 const BASE_URL = 'http://localhost:8081';
 
 export class ApiError extends Error {
@@ -43,106 +64,185 @@ class ApiClient {
   }
 
   // Auth APIs
-  async login(credentials: { username: string; password: string }) {
+  async login(credentials: AdminLoginRequest): Promise<ApiResponse<AdminLoginResponse>> {
     return this.request('/admin/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
   }
 
-  async logout() {
-    return this.request('/admin/auth/logout');
+  async logout(): Promise<ApiResponse<void>> {
+    return this.request('/admin/auth/logout', {
+      method: 'POST',
+    });
   }
 
   // Flower Messages APIs
-  async getFlowerMessages() {
-    return this.request('/admin/flower-messages');
+  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<PageResponse<FlowerMessage>> {
+    const params = new URLSearchParams();
+    
+    // 검색 조건 추가
+    if (condition.searchKeyword) params.append('condition.searchKeyword', condition.searchKeyword);
+    if (condition.startDate) params.append('condition.startDate', condition.startDate);
+    if (condition.endDate) params.append('condition.endDate', condition.endDate);
+    if (condition.messageType) params.append('condition.messageType', condition.messageType);
+    if (condition.deleteFlag) params.append('condition.deleteFlag', condition.deleteFlag);
+    
+    // 페이징 정보 추가
+    params.append('pageable.page', pageable.page.toString());
+    params.append('pageable.size', pageable.size.toString());
+    if (pageable.sort) {
+      pageable.sort.forEach(s => params.append('pageable.sort', s));
+    }
+
+    return this.request(`/admin/flower-messages?${params.toString()}`);
   }
 
-  async updateFlowerMessage(messageId: number, data: any) {
+  async updateFlowerMessage(messageId: number, data: AdminFlowerMessageUpdateRequest): Promise<ApiResponse<FlowerMessage>> {
     return this.request(`/admin/flower-messages/${messageId}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteFlowerMessage(messageId: number) {
+  async deleteFlowerMessage(messageId: number): Promise<ApiResponse<void>> {
     return this.request(`/admin/flower-messages/${messageId}`, {
       method: 'DELETE',
     });
   }
 
   // Leaf Messages APIs
-  async getLeafMessages() {
-    return this.request('/admin/leaf-messages');
+  async getLeafMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponse<LeafMessage>>> {
+    const params = new URLSearchParams();
+    
+    // 검색 조건 추가
+    if (condition.searchKeyword) params.append('condition.searchKeyword', condition.searchKeyword);
+    if (condition.startDate) params.append('condition.startDate', condition.startDate);
+    if (condition.endDate) params.append('condition.endDate', condition.endDate);
+    if (condition.messageType) params.append('condition.messageType', condition.messageType);
+    if (condition.deleteFlag) params.append('condition.deleteFlag', condition.deleteFlag);
+    
+    // 페이징 정보 추가
+    params.append('pageable.page', pageable.page.toString());
+    params.append('pageable.size', pageable.size.toString());
+    if (pageable.sort) {
+      pageable.sort.forEach(s => params.append('pageable.sort', s));
+    }
+
+    return this.request(`/admin/leaf-messages?${params.toString()}`);
   }
 
-  async deleteLeafMessage(messageId: number) {
+  async deleteLeafMessage(messageId: number): Promise<ApiResponse<void>> {
     return this.request(`/admin/leaf-messages/${messageId}`, {
       method: 'DELETE',
     });
   }
 
   // Excel Download
-  async downloadMessagesExcel() {
-    const response = await fetch(`${this.baseUrl}/admin/messages/excel`, {
+  async downloadMessagesExcel(condition: AdminMessageSearchCondition = {}): Promise<Blob> {
+    const params = new URLSearchParams();
+    
+    if (condition.searchKeyword) params.append('condition.searchKeyword', condition.searchKeyword);
+    if (condition.startDate) params.append('condition.startDate', condition.startDate);
+    if (condition.endDate) params.append('condition.endDate', condition.endDate);
+    if (condition.messageType) params.append('condition.messageType', condition.messageType);
+    if (condition.deleteFlag) params.append('condition.deleteFlag', condition.deleteFlag);
+
+    const response = await fetch(`${this.baseUrl}/admin/messages/excel?${params.toString()}`, {
       credentials: 'include',
     });
     return response.blob();
   }
 
   // Admin Accounts APIs
-  async getAdminAccounts() {
+  async getAdminAccounts(): Promise<ApiResponse<AdminAccount[]>> {
     return this.request('/admin/accounts');
   }
 
-  async createAdminAccount(data: any) {
+  async createAdminAccount(data: AdminAccountCreateRequest): Promise<ApiResponse<AdminAccount>> {
     return this.request('/admin/accounts', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  async updateAdminAccount(adminIndex: number, data: any) {
+  async updateAdminAccount(adminIndex: number, data: AdminAccountUpdateRequest): Promise<ApiResponse<AdminAccount>> {
     return this.request(`/admin/accounts/${adminIndex}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async deleteAdminAccount(adminIndex: number) {
+  async deleteAdminAccount(adminIndex: number): Promise<ApiResponse<void>> {
     return this.request(`/admin/accounts/${adminIndex}`, {
       method: 'DELETE',
     });
   }
 
-  async resetAdminPassword(adminIndex: number) {
+  async resetAdminPassword(adminIndex: number): Promise<ApiResponse<string>> {
     return this.request(`/admin/accounts/${adminIndex}/password-reset`, {
       method: 'POST',
     });
   }
 
-  async updateMyInfo(data: any) {
+  async unlockAdminAccount(adminIndex: number): Promise<ApiResponse<void>> {
+    return this.request(`/admin/accounts/${adminIndex}/unlock`, {
+      method: 'PUT',
+    });
+  }
+
+  async updateMyProfile(data: AdminProfileUpdateRequest): Promise<ApiResponse<AdminAccount>> {
     return this.request('/admin/accounts/me', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
-  async updateMyPassword(data: any) {
+  async updateMyPassword(data: AdminPasswordUpdateRequest): Promise<ApiResponse<void>> {
     return this.request('/admin/accounts/me/password', {
-      method: 'POST',
+      method: 'PUT',
       body: JSON.stringify(data),
     });
   }
 
   // Logs APIs
-  async getLoginLogs() {
-    return this.request('/admin/logs/logins');
+  async getLoginLogs(condition: AdminLogSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponseWithSpring<AdminLoginHistory>>> {
+    const params = new URLSearchParams();
+    
+    // 검색 조건 추가
+    if (condition.adminId) params.append('condition.adminId', condition.adminId);
+    if (condition.startDate) params.append('condition.startDate', condition.startDate);
+    if (condition.endDate) params.append('condition.endDate', condition.endDate);
+    if (condition.ipAddress) params.append('condition.ipAddress', condition.ipAddress);
+    
+    // 페이징 정보 추가
+    params.append('pageable.page', pageable.page.toString());
+    params.append('pageable.size', pageable.size.toString());
+    if (pageable.sort) {
+      pageable.sort.forEach(s => params.append('pageable.sort', s));
+    }
+
+    return this.request(`/admin/logs/logins?${params.toString()}`);
   }
 
-  async getActivityLogs() {
-    return this.request('/admin/logs/activities');
+  async getActivityLogs(condition: AdminLogSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponseWithSpring<AdminActivityHistory>>> {
+    const params = new URLSearchParams();
+    
+    // 검색 조건 추가
+    if (condition.adminId) params.append('condition.adminId', condition.adminId);
+    if (condition.startDate) params.append('condition.startDate', condition.startDate);
+    if (condition.endDate) params.append('condition.endDate', condition.endDate);
+    if (condition.ipAddress) params.append('condition.ipAddress', condition.ipAddress);
+    if (condition.actType) params.append('condition.actType', condition.actType);
+    
+    // 페이징 정보 추가
+    params.append('pageable.page', pageable.page.toString());
+    params.append('pageable.size', pageable.size.toString());
+    if (pageable.sort) {
+      pageable.sort.forEach(s => params.append('pageable.sort', s));
+    }
+
+    return this.request(`/admin/logs/activites?${params.toString()}`);
   }
 }
 

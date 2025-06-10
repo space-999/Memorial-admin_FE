@@ -3,8 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 import { apiClient } from '@/lib/api';
-import { LeafMessage } from '@/types/admin';
+import { LeafMessage, AdminMessageSearchCondition } from '@/types/admin';
 import { useToast } from '@/hooks/use-toast';
 import { Trash2, Download } from 'lucide-react';
 
@@ -20,8 +21,14 @@ export const LeafMessages: React.FC = () => {
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const data = await apiClient.getLeafMessages() as LeafMessage[];
-      setMessages(Array.isArray(data) ? data : []);
+      const condition: AdminMessageSearchCondition = {
+        messageType: 'LEAF',
+        deleteFlag: 'N'
+      };
+      const response = await apiClient.getLeafMessages(condition);
+      if (response.success && response.data) {
+        setMessages(response.data.content || []);
+      }
     } catch (error) {
       console.error('Failed to fetch leaf messages:', error);
       toast({
@@ -38,12 +45,16 @@ export const LeafMessages: React.FC = () => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
     try {
-      await apiClient.deleteLeafMessage(messageId);
-      toast({
-        title: '삭제 완료',
-        description: '나뭇잎 메시지가 삭제되었습니다.',
-      });
-      fetchMessages();
+      const response = await apiClient.deleteLeafMessage(messageId);
+      if (response.success) {
+        toast({
+          title: '삭제 완료',
+          description: '나뭇잎 메시지가 삭제되었습니다.',
+        });
+        fetchMessages();
+      } else {
+        throw new Error(response.message || '삭제에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Failed to delete message:', error);
       toast({
@@ -56,11 +67,14 @@ export const LeafMessages: React.FC = () => {
 
   const handleDownloadExcel = async () => {
     try {
-      const blob = await apiClient.downloadMessagesExcel();
+      const condition: AdminMessageSearchCondition = {
+        messageType: 'LEAF'
+      };
+      const blob = await apiClient.downloadMessagesExcel(condition);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `messages_${new Date().toISOString().split('T')[0]}.xlsx`;
+      a.download = `leaf_messages_${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -68,7 +82,7 @@ export const LeafMessages: React.FC = () => {
       
       toast({
         title: '다운로드 완료',
-        description: '메시지 목록이 엑셀 파일로 다운로드되었습니다.',
+        description: '나뭇잎 메시지 목록이 엑셀 파일로 다운로드되었습니다.',
       });
     } catch (error) {
       console.error('Failed to download excel:', error);
@@ -128,24 +142,29 @@ export const LeafMessages: React.FC = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>작성자</TableHead>
                 <TableHead>내용</TableHead>
                 <TableHead>작성일</TableHead>
+                <TableHead>상태</TableHead>
                 <TableHead>작업</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {messages.map((message) => (
-                <TableRow key={message.messageId}>
-                  <TableCell>{message.messageId}</TableCell>
-                  <TableCell>{message.authorName}</TableCell>
+                <TableRow key={message.id}>
+                  <TableCell>{message.id}</TableCell>
                   <TableCell className="max-w-xs truncate">{message.content}</TableCell>
                   <TableCell>{new Date(message.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Badge variant={message.deleteFlag === 'N' ? 'default' : 'secondary'}>
+                      {message.deleteFlag === 'N' ? '표시' : '삭제됨'}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDelete(message.messageId)}
+                      onClick={() => handleDelete(message.id)}
+                      disabled={message.deleteFlag === 'Y'}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>

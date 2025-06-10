@@ -8,11 +8,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { AdminAccount } from '@/types/admin';
+import { AdminLoginResponse } from '@/types/admin';
 
 export const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [adminId, setAdminId] = useState('');
+  const [adminPwd, setAdminPwd] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -26,12 +26,28 @@ export const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await apiClient.login({ username, password }) as AdminAccount;
-      login(response);
-      toast({
-        title: '로그인 성공',
-        description: '관리자 페이지에 오신 것을 환영합니다.',
-      });
+      const response = await apiClient.login({ adminId, adminPwd });
+      
+      if (response.success && response.data) {
+        // API 응답 데이터를 기존 AuthContext와 호환되도록 변환
+        const userData = {
+          adminIndex: 0, // API 응답에 없으므로 임시값
+          username: response.data.adminId,
+          name: response.data.adminNickName,
+          email: '', // API 응답에 없으므로 빈값
+          role: response.data.adminGrade.toString(),
+          createdAt: '',
+          lastLoginAt: response.data.lastLoginTime,
+        };
+        
+        login(userData);
+        toast({
+          title: '로그인 성공',
+          description: '관리자 페이지에 오신 것을 환영합니다.',
+        });
+      } else {
+        throw new Error(response.message || '로그인에 실패했습니다.');
+      }
     } catch (error) {
       console.error('Login error:', error);
       toast({
@@ -54,23 +70,23 @@ export const Login: React.FC = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">아이디</Label>
+              <Label htmlFor="adminId">아이디</Label>
               <Input
-                id="username"
+                id="adminId"
                 type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                value={adminId}
+                onChange={(e) => setAdminId(e.target.value)}
                 placeholder="아이디를 입력하세요"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
+              <Label htmlFor="adminPwd">비밀번호</Label>
               <Input
-                id="password"
+                id="adminPwd"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={adminPwd}
+                onChange={(e) => setAdminPwd(e.target.value)}
                 placeholder="비밀번호를 입력하세요"
                 required
               />

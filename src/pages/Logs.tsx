@@ -4,12 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { apiClient } from '@/lib/api';
-import { LoginLog, ActivityLog } from '@/types/admin';
+import { AdminLoginHistory, AdminActivityHistory, AdminLogSearchCondition } from '@/types/admin';
 import { useToast } from '@/hooks/use-toast';
 
 export const Logs: React.FC = () => {
-  const [loginLogs, setLoginLogs] = useState<LoginLog[]>([]);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  const [loginLogs, setLoginLogs] = useState<AdminLoginHistory[]>([]);
+  const [activityLogs, setActivityLogs] = useState<AdminActivityHistory[]>([]);
   const [loginLoading, setLoginLoading] = useState(true);
   const [activityLoading, setActivityLoading] = useState(true);
   const { toast } = useToast();
@@ -22,8 +22,11 @@ export const Logs: React.FC = () => {
   const fetchLoginLogs = async () => {
     try {
       setLoginLoading(true);
-      const data = await apiClient.getLoginLogs() as LoginLog[];
-      setLoginLogs(Array.isArray(data) ? data : []);
+      const condition: AdminLogSearchCondition = {};
+      const response = await apiClient.getLoginLogs(condition);
+      if (response.success && response.data) {
+        setLoginLogs(response.data.content || []);
+      }
     } catch (error) {
       console.error('Failed to fetch login logs:', error);
       toast({
@@ -39,8 +42,11 @@ export const Logs: React.FC = () => {
   const fetchActivityLogs = async () => {
     try {
       setActivityLoading(true);
-      const data = await apiClient.getActivityLogs() as ActivityLog[];
-      setActivityLogs(Array.isArray(data) ? data : []);
+      const condition: AdminLogSearchCondition = {};
+      const response = await apiClient.getActivityLogs(condition);
+      if (response.success && response.data) {
+        setActivityLogs(response.data.content || []);
+      }
     } catch (error) {
       console.error('Failed to fetch activity logs:', error);
       toast({
@@ -85,25 +91,25 @@ export const Logs: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>관리자명</TableHead>
+                      <TableHead>로그인 인덱스</TableHead>
+                      <TableHead>관리자 인덱스</TableHead>
+                      <TableHead>관리자 ID</TableHead>
+                      <TableHead>관리자 닉네임</TableHead>
                       <TableHead>로그인 시간</TableHead>
                       <TableHead>IP 주소</TableHead>
-                      <TableHead>브라우저</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {loginLogs.map((log) => (
-                      <TableRow key={log.logId}>
-                        <TableCell>{log.logId}</TableCell>
-                        <TableCell>{log.adminName}</TableCell>
+                      <TableRow key={log.loginIndex}>
+                        <TableCell>{log.loginIndex}</TableCell>
+                        <TableCell>{log.adminIndex}</TableCell>
+                        <TableCell>{log.adminId}</TableCell>
+                        <TableCell>{log.adminNickname}</TableCell>
                         <TableCell>
                           {new Date(log.loginTime).toLocaleString()}
                         </TableCell>
-                        <TableCell>{log.ipAddress}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {log.userAgent}
-                        </TableCell>
+                        <TableCell>{log.loginIp}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -132,9 +138,12 @@ export const Logs: React.FC = () => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>관리자명</TableHead>
-                      <TableHead>작업</TableHead>
+                      <TableHead>활동 인덱스</TableHead>
+                      <TableHead>관리자 인덱스</TableHead>
+                      <TableHead>관리자 ID</TableHead>
+                      <TableHead>관리자 닉네임</TableHead>
+                      <TableHead>활동 타입</TableHead>
+                      <TableHead>URL</TableHead>
                       <TableHead>세부사항</TableHead>
                       <TableHead>시간</TableHead>
                       <TableHead>IP 주소</TableHead>
@@ -142,17 +151,18 @@ export const Logs: React.FC = () => {
                   </TableHeader>
                   <TableBody>
                     {activityLogs.map((log) => (
-                      <TableRow key={log.logId}>
-                        <TableCell>{log.logId}</TableCell>
-                        <TableCell>{log.adminName}</TableCell>
-                        <TableCell>{log.action}</TableCell>
-                        <TableCell className="max-w-xs truncate">
-                          {log.details}
-                        </TableCell>
+                      <TableRow key={log.actIndex}>
+                        <TableCell>{log.actIndex}</TableCell>
+                        <TableCell>{log.adminIndex}</TableCell>
+                        <TableCell>{log.adminId}</TableCell>
+                        <TableCell>{log.adminNickName}</TableCell>
+                        <TableCell>{log.actType}</TableCell>
+                        <TableCell className="max-w-xs truncate">{log.actUrl}</TableCell>
+                        <TableCell className="max-w-xs truncate">{log.actDetail}</TableCell>
                         <TableCell>
-                          {new Date(log.timestamp).toLocaleString()}
+                          {new Date(log.actTime).toLocaleString()}
                         </TableCell>
-                        <TableCell>{log.ipAddress}</TableCell>
+                        <TableCell>{log.actIp}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -80,12 +80,12 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
           {showMessageType && onMessageTypeChange && (
             <div className="space-y-2">
               <Label>메시지 타입</Label>
-              <Select value={messageType} onValueChange={onMessageTypeChange}>
+              <Select value={messageType || 'all'} onValueChange={(value) => onMessageTypeChange(value === 'all' ? '' : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="타입 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="FLOWER">꽃 메시지</SelectItem>
                   <SelectItem value="LEAF">나뭇잎 메시지</SelectItem>
                 </SelectContent>
@@ -96,12 +96,12 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
           {showDeleteFlag && onDeleteFlagChange && (
             <div className="space-y-2">
               <Label>상태</Label>
-              <Select value={deleteFlag} onValueChange={onDeleteFlagChange}>
+              <Select value={deleteFlag || 'all'} onValueChange={(value) => onDeleteFlagChange(value === 'all' ? '' : value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="상태 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">전체</SelectItem>
+                  <SelectItem value="all">전체</SelectItem>
                   <SelectItem value="N">표시</SelectItem>
                   <SelectItem value="Y">삭제됨</SelectItem>
                 </SelectContent>

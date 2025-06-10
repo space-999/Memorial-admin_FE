@@ -19,7 +19,7 @@ export const LeafMessages: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('N');
+  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('');
 
   useEffect(() => {
     fetchMessages();
@@ -28,6 +28,13 @@ export const LeafMessages: React.FC = () => {
   const fetchMessages = async () => {
     try {
       setLoading(true);
+      console.log('Fetching leaf messages with filters:', {
+        searchKeyword,
+        startDate,
+        endDate,
+        deleteFlag
+      });
+      
       const condition: AdminMessageSearchConditionDto = {
         messageType: 'LEAF',
         deleteFlag: deleteFlag || undefined,
@@ -35,9 +42,16 @@ export const LeafMessages: React.FC = () => {
         startDate: startDate || undefined,
         endDate: endDate || undefined
       };
-      const response = await apiClient.getLeafMessages(condition);
-      if (response.success && response.data) {
-        setMessages(response.data.content || []);
+      
+      const pageable = { page: 0, size: 100 };
+      const response = await apiClient.getLeafMessages(condition, pageable);
+      console.log('Leaf messages response:', response);
+      
+      if (response && response.content) {
+        setMessages(response.content);
+      } else {
+        console.log('No content in response or invalid response structure');
+        setMessages([]);
       }
     } catch (error) {
       console.error('Failed to fetch leaf messages:', error);
@@ -46,20 +60,28 @@ export const LeafMessages: React.FC = () => {
         description: '나뭇잎 메시지를 불러오는데 실패했습니다.',
         variant: 'destructive',
       });
+      setMessages([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = () => {
+    console.log('Search triggered with filters:', {
+      searchKeyword,
+      startDate,
+      endDate,
+      deleteFlag
+    });
     fetchMessages();
   };
 
   const handleReset = () => {
+    console.log('Reset filters');
     setSearchKeyword('');
     setStartDate('');
     setEndDate('');
-    setDeleteFlag('N');
+    setDeleteFlag('');
     // 초기화 후 다시 검색
     setTimeout(() => {
       fetchMessages();
@@ -71,14 +93,14 @@ export const LeafMessages: React.FC = () => {
 
     try {
       const response = await apiClient.deleteLeafMessage(messageId);
-      if (response.success) {
+      if (response && response.success) {
         toast({
           title: '삭제 완료',
           description: '나뭇잎 메시지가 삭제되었습니다.',
         });
         fetchMessages();
       } else {
-        throw new Error(response.message || '삭제에 실패했습니다.');
+        throw new Error('삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to delete message:', error);

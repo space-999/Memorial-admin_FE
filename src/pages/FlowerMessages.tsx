@@ -22,7 +22,7 @@ export const FlowerMessages: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('N');
+  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('');
 
   useEffect(() => {
     fetchMessages();
@@ -31,6 +31,13 @@ export const FlowerMessages: React.FC = () => {
   const fetchMessages = async () => {
     try {
       setLoading(true);
+      console.log('Fetching flower messages with filters:', {
+        searchKeyword,
+        startDate,
+        endDate,
+        deleteFlag
+      });
+      
       const condition: AdminMessageSearchConditionDto = {
         messageType: 'FLOWER',
         deleteFlag: deleteFlag || undefined,
@@ -38,9 +45,16 @@ export const FlowerMessages: React.FC = () => {
         startDate: startDate || undefined,
         endDate: endDate || undefined
       };
-      const response = await apiClient.getFlowerMessages(condition);
-      if (response.success && response.data) {
-        setMessages(response.data.content || []);
+      
+      const pageable = { page: 0, size: 100 };
+      const response = await apiClient.getFlowerMessages(condition, pageable);
+      console.log('Flower messages response:', response);
+      
+      if (response && response.content) {
+        setMessages(response.content);
+      } else {
+        console.log('No content in response or invalid response structure');
+        setMessages([]);
       }
     } catch (error) {
       console.error('Failed to fetch flower messages:', error);
@@ -49,20 +63,28 @@ export const FlowerMessages: React.FC = () => {
         description: '꽃 메시지를 불러오는데 실패했습니다.',
         variant: 'destructive',
       });
+      setMessages([]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleSearch = () => {
+    console.log('Search triggered with filters:', {
+      searchKeyword,
+      startDate,
+      endDate,
+      deleteFlag
+    });
     fetchMessages();
   };
 
   const handleReset = () => {
+    console.log('Reset filters');
     setSearchKeyword('');
     setStartDate('');
     setEndDate('');
-    setDeleteFlag('N');
+    setDeleteFlag('');
     // 초기화 후 다시 검색
     setTimeout(() => {
       fetchMessages();
@@ -79,14 +101,14 @@ export const FlowerMessages: React.FC = () => {
 
     try {
       const response = await apiClient.deleteFlowerMessage(messageId);
-      if (response.success) {
+      if (response && response.success) {
         toast({
           title: '삭제 완료',
           description: '꽃 메시지가 삭제되었습니다.',
         });
         fetchMessages();
       } else {
-        throw new Error(response.message || '삭제에 실패했습니다.');
+        throw new Error('삭제에 실패했습니다.');
       }
     } catch (error) {
       console.error('Failed to delete message:', error);
@@ -135,7 +157,7 @@ export const FlowerMessages: React.FC = () => {
     try {
       if (editingMessage) {
         const response = await apiClient.updateFlowerMessage(editingMessage.id, messageData);
-        if (response.success) {
+        if (response && response.success) {
           toast({
             title: '수정 완료',
             description: '꽃 메시지가 수정되었습니다.',
@@ -144,7 +166,7 @@ export const FlowerMessages: React.FC = () => {
           setEditingMessage(null);
           fetchMessages();
         } else {
-          throw new Error(response.message || '수정에 실패했습니다.');
+          throw new Error('수정에 실패했습니다.');
         }
       }
     } catch (error) {

@@ -89,7 +89,7 @@ export const LogSearchFilters: React.FC<LogSearchFiltersProps> = ({
               <Label htmlFor="actType">활동 타입</Label>
               <Input
                 id="actType"
-                value={actType}
+                value={actType || ''}
                 onChange={(e) => onActTypeChange(e.target.value)}
                 placeholder="활동 타입 검색..."
               />

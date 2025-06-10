@@ -42,7 +42,25 @@ export interface AdminMessageSearchCondition {
   deleteFlag?: 'Y' | 'N';
 }
 
+// API 명세서와 동일한 DTO 인터페이스 추가
+export interface AdminMessageSearchConditionDto {
+  searchKeyword?: string;
+  startDate?: string;
+  endDate?: string;
+  messageType?: 'FLOWER' | 'LEAF';
+  deleteFlag?: 'Y' | 'N';
+}
+
 export interface AdminLogSearchCondition {
+  adminId?: string;
+  startDate?: string;
+  endDate?: string;
+  ipAddress?: string;
+  actType?: string;
+}
+
+// API 명세서와 동일한 DTO 인터페이스 추가
+export interface AdminLogSearchConditionDto {
   adminId?: string;
   startDate?: string;
   endDate?: string;
@@ -72,6 +90,15 @@ export interface AdminLoginResponse {
   lastLoginTime: string;
 }
 
+// API 명세서와 일치하는 응답 DTO 타입들
+export interface AdminLoginResponseDto {
+  sessionId: string;
+  adminId: string;
+  adminNickName: string;
+  adminGrade: number;
+  lastLoginTime: string;
+}
+
 export interface AdminAccount {
   adminIndex: number;
   adminId: string;
@@ -80,12 +107,36 @@ export interface AdminAccount {
   adminPhone?: string;
   accountNonLocked: boolean;
   lastLoginTime?: string;
-  loginFailCnt: number;
+  loginFailCnt: string;
+  adminCreateTime: string;
+  adminPwdChgTime?: string;
+}
+
+// API 명세서와 일치하는 응답 DTO 타입 추가
+export interface AdminAccountResponseDto {
+  adminIndex: number;
+  adminId: string;
+  adminNickName: string;
+  adminGrade: number;
+  adminPhone?: string;
+  accountNonLocked: boolean;
+  lastLoginTime?: string;
+  loginFailCnt: string;
   adminCreateTime: string;
   adminPwdChgTime?: string;
 }
 
 export interface FlowerMessage {
+  id: number;
+  content: string;
+  createdAt: string;
+  deleteFlag: string;
+  updatedAt?: string;
+  messageType: 'FLOWER' | 'LEAF';
+}
+
+// API 명세서와 일치하는 응답 DTO 타입 추가
+export interface AdminFlowerMessageResponseDto {
   id: number;
   content: string;
   createdAt: string;
@@ -103,6 +154,16 @@ export interface LeafMessage {
   messageType: 'FLOWER' | 'LEAF';
 }
 
+// API 명세서와 일치하는 응답 DTO 타입 추가
+export interface AdminLeafMessageResponseDto {
+  id: number;
+  content: string;
+  createdAt: string;
+  deleteFlag: string;
+  updatedAt?: string;
+  messageType: 'FLOWER' | 'LEAF';
+}
+
 export interface AdminLoginHistory {
   loginIndex: number;
   adminIndex: number;
@@ -112,7 +173,30 @@ export interface AdminLoginHistory {
   loginTime: string;
 }
 
+// API 명세서와 일치하는 응답 DTO 타입 추가
+export interface AdminLoginHistResponseDto {
+  loginIndex: number;
+  adminIndex: number;
+  adminId: string;
+  adminNickname: string;
+  loginIp: string;
+  loginTime: string;
+}
+
 export interface AdminActivityHistory {
+  actIndex: number;
+  adminIndex: number;
+  adminId: string;
+  adminNickName: string;
+  actType: string;
+  actUrl: string;
+  actDetail: string;
+  actIp: string;
+  actTime: string;
+}
+
+// API 명세서와 일치하는 응답 DTO 타입 추가
+export interface AdminActHistResponseDto {
   actIndex: number;
   adminIndex: number;
   adminId: string;

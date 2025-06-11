@@ -1,188 +1,167 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { AdminMessageSearchCondition, Pageable } from '@/types/admin';
 import { SearchFilters } from '@/components/SearchFilters';
 import { FlowerMessageDialog } from '@/components/FlowerMessageDialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Pencil, Trash2, Download } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Eye, Edit, Trash2 } from 'lucide-react';
+import { AdminMessageSearchCondition } from '@/types/admin';
 
 export const FlowerMessages = () => {
-  const [searchCondition, setSearchCondition] = useState<AdminMessageSearchCondition>({});
-  const [pageable, setPageable] = useState<Pageable>({ page: 0, size: 20 });
-  const [editingMessage, setEditingMessage] = useState<any>(null);
+  const [filters, setFilters] = useState<AdminMessageSearchCondition>({
+    searchKeyword: '',
+    startDate: '',
+    endDate: '',
+    deleteFlag: ''
+  });
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+  const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
 
-  const { data: messagesResponse, isLoading, refetch } = useQuery({
-    queryKey: ['flowerMessages', searchCondition, pageable],
+  const { data: messagesData, isLoading, error, refetch } = useQuery({
+    queryKey: ['flowerMessages', filters],
     queryFn: () => {
-      console.log('Fetching flower messages with filters:', searchCondition);
-      return apiClient.getFlowerMessages(searchCondition, pageable);
+      console.log('Fetching flower messages with filters:', filters);
+      return apiClient.getFlowerMessages(filters);
     },
   });
 
-  console.log('Flower messages response:', messagesResponse);
-
-  const messages = messagesResponse?.data?.content || [];
-  const totalPages = messagesResponse?.data?.totalPages || 0;
-  const totalElements = messagesResponse?.data?.totalElements || 0;
-
-  const handleSearch = (filters: AdminMessageSearchCondition) => {
-    console.log('Search filters applied:', filters);
-    setSearchCondition(filters);
-    setPageable(prev => ({ ...prev, page: 0 }));
+  const handleSearch = (newFilters: AdminMessageSearchCondition) => {
+    setFilters(newFilters);
   };
 
-  const handleUpdate = async (messageId: number, content: string) => {
+  const handleViewMessage = (message: any) => {
+    setSelectedMessage(message);
+    setDialogMode('view');
+    setIsDialogOpen(true);
+  };
+
+  const handleEditMessage = (message: any) => {
+    setSelectedMessage(message);
+    setDialogMode('edit');
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteMessage = async (messageId: number) => {
     try {
-      await apiClient.updateFlowerMessage(messageId, { content });
-      toast({
-        title: "성공",
-        description: "꽃 메시지가 수정되었습니다.",
-      });
+      await apiClient.deleteFlowerMessage(messageId);
       refetch();
-      setIsDialogOpen(false);
-      setEditingMessage(null);
     } catch (error) {
-      toast({
-        title: "오류",
-        description: "꽃 메시지 수정에 실패했습니다.",
-        variant: "destructive",
-      });
+      console.error('Failed to delete message:', error);
     }
   };
 
-  const handleDelete = async (messageId: number) => {
-    if (confirm('정말로 이 메시지를 삭제하시겠습니까?')) {
-      try {
-        await apiClient.deleteFlowerMessage(messageId);
-        toast({
-          title: "성공",
-          description: "꽃 메시지가 삭제되었습니다.",
-        });
-        refetch();
-      } catch (error) {
-        toast({
-          title: "오류",
-          description: "꽃 메시지 삭제에 실패했습니다.",
-          variant: "destructive",
-        });
-      }
-    }
-  };
-
-  const handleDownloadExcel = async () => {
+  const handleSaveMessage = async (data: { content: string }) => {
+    if (!selectedMessage) return;
+    
     try {
-      const blob = await apiClient.downloadMessagesExcel(searchCondition);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'flower-messages.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      toast({
-        title: "성공",
-        description: "Excel 파일이 다운로드되었습니다.",
-      });
+      await apiClient.updateFlowerMessage(selectedMessage.flowerMessageId, data.content);
+      setIsDialogOpen(false);
+      refetch();
     } catch (error) {
-      toast({
-        title: "오류",
-        description: "Excel 다운로드에 실패했습니다.",
-        variant: "destructive",
-      });
+      console.error('Failed to update message:', error);
     }
   };
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-64">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        메시지를 불러오는데 실패했습니다.
+      </div>
+    );
+  }
+
+  console.log('Flower messages response:', messagesData);
+
+  const messages = messagesData?.data?.content || [];
+
+  if (messages.length === 0) {
+    console.log('No content in response or invalid response structure');
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold">꽃 메시지 관리</h1>
-        <Button onClick={handleDownloadExcel} variant="outline">
-          <Download className="h-4 w-4 mr-2" />
-          Excel 다운로드
-        </Button>
-      </div>
-
+      <h1 className="text-3xl font-bold">꽃 메시지 관리</h1>
+      
       <SearchFilters onSearch={handleSearch} />
 
       <Card>
         <CardHeader>
-          <CardTitle>꽃 메시지 목록 (총 {totalElements}개)</CardTitle>
+          <CardTitle>꽃 메시지 목록</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {messages.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                등록된 꽃 메시지가 없습니다.
-              </div>
-            ) : (
-              messages.map((message: any) => (
-                <div key={message.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">#{message.id}</p>
-                      <p className="mt-2">{message.content}</p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        작성일: {new Date(message.createdAt).toLocaleString('ko-KR')}
-                        {message.updatedAt && (
-                          <span> | 수정일: {new Date(message.updatedAt).toLocaleString('ko-KR')}</span>
-                        )}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingMessage(message);
-                          setIsDialogOpen(true);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(message.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center space-x-2 mt-6">
-              <Button
-                variant="outline"
-                disabled={pageable.page === 0}
-                onClick={() => setPageable(prev => ({ ...prev, page: prev.page - 1 }))}
-              >
-                이전
-              </Button>
-              <span className="text-sm">
-                {pageable.page + 1} / {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                disabled={pageable.page >= totalPages - 1}
-                onClick={() => setPageable(prev => ({ ...prev, page: prev.page + 1 }))}
-              >
-                다음
-              </Button>
+          {messages.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              검색 결과가 없습니다.
             </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>작성자</TableHead>
+                  <TableHead>내용</TableHead>
+                  <TableHead>작성일</TableHead>
+                  <TableHead>상태</TableHead>
+                  <TableHead>작업</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {messages.map((message: any) => (
+                  <TableRow key={message.flowerMessageId}>
+                    <TableCell>{message.flowerMessageId}</TableCell>
+                    <TableCell>{message.writerName || '익명'}</TableCell>
+                    <TableCell className="max-w-xs truncate">
+                      {message.flowerMessageContent}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(message.createTime).toLocaleDateString('ko-KR')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={message.deleteFlag ? 'destructive' : 'default'}>
+                        {message.deleteFlag ? '삭제됨' : '활성'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleViewMessage(message)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditMessage(message)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteMessage(message.flowerMessageId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -190,8 +169,9 @@ export const FlowerMessages = () => {
       <FlowerMessageDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        message={editingMessage}
-        onSave={handleUpdate}
+        message={selectedMessage}
+        mode={dialogMode}
+        onSave={handleSaveMessage}
       />
     </div>
   );

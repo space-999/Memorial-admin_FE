@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -9,6 +8,7 @@ import {
   Settings,
   LogOut,
   FileText,
+  User,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
@@ -21,6 +21,7 @@ const navigation = [
   { name: '나뭇잎 메시지', href: '/leaf-messages', icon: FileText },
   { name: '관리자 계정', href: '/admin-accounts', icon: Users },
   { name: '로그 관리', href: '/logs', icon: Settings },
+  { name: '마이페이지', href: '/my-profile', icon: User },
 ];
 
 export const Sidebar: React.FC = () => {

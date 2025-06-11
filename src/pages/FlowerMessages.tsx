@@ -15,26 +15,23 @@ export const FlowerMessages = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('');
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
 
   const { data: messagesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['flowerMessages', searchKeyword, startDate, endDate, deleteFlag],
+    queryKey: ['flowerMessages', searchKeyword, startDate, endDate],
     queryFn: () => {
       console.log('Fetching flower messages with filters:', {
         searchKeyword,
         startDate,
-        endDate,
-        deleteFlag
+        endDate
       });
       
       const condition: AdminMessageSearchCondition = {
         searchKeyword: searchKeyword || undefined,
         startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        deleteFlag: deleteFlag || undefined
+        endDate: endDate || undefined
       };
       
       const pageable = { page: 0, size: 100 };
@@ -46,8 +43,7 @@ export const FlowerMessages = () => {
     console.log('Search triggered with filters:', {
       searchKeyword,
       startDate,
-      endDate,
-      deleteFlag
+      endDate
     });
     refetch();
   };
@@ -57,7 +53,6 @@ export const FlowerMessages = () => {
     setSearchKeyword('');
     setStartDate('');
     setEndDate('');
-    setDeleteFlag('');
     setTimeout(() => {
       refetch();
     }, 100);
@@ -114,8 +109,9 @@ export const FlowerMessages = () => {
 
   console.log('Flower messages response:', messagesData);
 
+  // 응답 데이터 확인 및 올바르게 추출
   const messages = messagesData?.data?.content || [];
-
+  
   if (messages.length === 0) {
     console.log('No content in response or invalid response structure');
   }
@@ -131,11 +127,9 @@ export const FlowerMessages = () => {
         onStartDateChange={setStartDate}
         endDate={endDate}
         onEndDateChange={setEndDate}
-        deleteFlag={deleteFlag}
-        onDeleteFlagChange={(value) => setDeleteFlag(value as 'Y' | 'N' | '')}
         onSearch={handleSearch}
         onReset={handleReset}
-        showDeleteFlag={true}
+        showDeleteFlag={false}
       />
 
       <Card>
@@ -165,14 +159,14 @@ export const FlowerMessages = () => {
                     <TableCell>{message.flowerMessageId}</TableCell>
                     <TableCell>{message.writerName || '익명'}</TableCell>
                     <TableCell className="max-w-xs truncate">
-                      {message.flowerMessageContent}
+                      {message.content || message.flowerMessageContent}
                     </TableCell>
                     <TableCell>
                       {new Date(message.createTime).toLocaleDateString('ko-KR')}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={message.deleteFlag ? 'destructive' : 'default'}>
-                        {message.deleteFlag ? '삭제됨' : '활성'}
+                      <Badge variant={message.deleteFlag === 'Y' ? 'destructive' : 'default'}>
+                        {message.deleteFlag === 'Y' ? '삭제됨' : '활성'}
                       </Badge>
                     </TableCell>
                     <TableCell>

@@ -1,4 +1,3 @@
-
 // API 요청 타입들
 export interface AdminLoginRequest {
   adminId: string;
@@ -226,6 +225,15 @@ export interface PageResponseWithSpring<T> {
   last: boolean;
   numberOfElements: number;
   empty: boolean;
+}
+
+// 꽃 메시지용 별도 PageResponse (ApiResponse로 감싸지지 않음)
+export interface FlowerMessagePageResponse {
+  content: AdminFlowerMessageResponseDto[];
+  totalPages: number;
+  totalElements: number;
+  pageNumber: number;
+  size: number;
 }
 
 // 대시보드용 통계 (기존 유지)

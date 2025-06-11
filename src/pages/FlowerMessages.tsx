@@ -83,7 +83,7 @@ export const FlowerMessages = () => {
     if (!selectedMessage) return;
     
     try {
-      await apiClient.updateFlowerMessage(selectedMessage.flowerMessageId, { content: data.content });
+      await apiClient.updateFlowerMessage(selectedMessage.id, { content: data.content });
       setIsDialogOpen(false);
       refetch();
     } catch (error) {
@@ -109,8 +109,8 @@ export const FlowerMessages = () => {
 
   console.log('Flower messages response:', messagesData);
 
-  // 응답 데이터 확인 및 올바르게 추출
-  const messages = messagesData?.data?.content || [];
+  // 꽃 메시지는 ApiResponse로 감싸지지 않고 직접 PageResponse 반환
+  const messages = messagesData?.content || [];
   
   if (messages.length === 0) {
     console.log('No content in response or invalid response structure');
@@ -155,14 +155,14 @@ export const FlowerMessages = () => {
               </TableHeader>
               <TableBody>
                 {messages.map((message: any) => (
-                  <TableRow key={message.flowerMessageId}>
-                    <TableCell>{message.flowerMessageId}</TableCell>
+                  <TableRow key={message.id}>
+                    <TableCell>{message.id}</TableCell>
                     <TableCell>{message.writerName || '익명'}</TableCell>
                     <TableCell className="max-w-xs truncate">
-                      {message.content || message.flowerMessageContent}
+                      {message.content}
                     </TableCell>
                     <TableCell>
-                      {new Date(message.createTime).toLocaleDateString('ko-KR')}
+                      {new Date(message.createdAt).toLocaleDateString('ko-KR')}
                     </TableCell>
                     <TableCell>
                       <Badge variant={message.deleteFlag === 'Y' ? 'destructive' : 'default'}>
@@ -188,7 +188,7 @@ export const FlowerMessages = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDeleteMessage(message.flowerMessageId)}
+                          onClick={() => handleDeleteMessage(message.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>

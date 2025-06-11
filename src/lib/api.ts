@@ -17,7 +17,8 @@ import {
   Pageable,
   ApiResponse,
   PageResponse,
-  PageResponseWithSpring
+  PageResponseWithSpring,
+  FlowerMessagePageResponse
 } from '@/types/admin';
 
 const BASE_URL = 'http://localhost:8081';
@@ -78,7 +79,7 @@ class ApiClient {
   }
 
   // Flower Messages APIs
-  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<PageResponse<FlowerMessage>>> {
+  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<FlowerMessagePageResponse> {
     const params = new URLSearchParams();
     
     // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)

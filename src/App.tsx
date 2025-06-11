@@ -13,6 +13,7 @@ import { FlowerMessages } from "@/pages/FlowerMessages";
 import { LeafMessages } from "@/pages/LeafMessages";
 import { AdminAccounts } from "@/pages/AdminAccounts";
 import { Logs } from "@/pages/Logs";
+import { MyProfile } from "@/pages/MyProfile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
               <Route path="leaf-messages" element={<LeafMessages />} />
               <Route path="admin-accounts" element={<AdminAccounts />} />
               <Route path="logs" element={<Logs />} />
+              <Route path="my-profile" element={<MyProfile />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -19,7 +19,6 @@ export const LeafMessages: React.FC = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('');
 
   useEffect(() => {
     fetchMessages();
@@ -31,13 +30,11 @@ export const LeafMessages: React.FC = () => {
       console.log('Fetching leaf messages with filters:', {
         searchKeyword,
         startDate,
-        endDate,
-        deleteFlag
+        endDate
       });
       
       const condition: AdminMessageSearchConditionDto = {
         messageType: 'LEAF',
-        deleteFlag: deleteFlag || undefined,
         searchKeyword: searchKeyword || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined
@@ -70,8 +67,7 @@ export const LeafMessages: React.FC = () => {
     console.log('Search triggered with filters:', {
       searchKeyword,
       startDate,
-      endDate,
-      deleteFlag
+      endDate
     });
     fetchMessages();
   };
@@ -81,7 +77,6 @@ export const LeafMessages: React.FC = () => {
     setSearchKeyword('');
     setStartDate('');
     setEndDate('');
-    setDeleteFlag('');
     // 초기화 후 다시 검색
     setTimeout(() => {
       fetchMessages();
@@ -118,8 +113,7 @@ export const LeafMessages: React.FC = () => {
         messageType: 'LEAF',
         searchKeyword: searchKeyword || undefined,
         startDate: startDate || undefined,
-        endDate: endDate || undefined,
-        deleteFlag: deleteFlag || undefined
+        endDate: endDate || undefined
       };
       const blob = await apiClient.downloadMessagesExcel(condition);
       const url = window.URL.createObjectURL(blob);
@@ -165,11 +159,9 @@ export const LeafMessages: React.FC = () => {
         onStartDateChange={setStartDate}
         endDate={endDate}
         onEndDateChange={setEndDate}
-        deleteFlag={deleteFlag}
-        onDeleteFlagChange={(value) => setDeleteFlag(value as 'Y' | 'N' | '')}
         onSearch={handleSearch}
         onReset={handleReset}
-        showDeleteFlag={true}
+        showDeleteFlag={false}
       />
 
       <Card>

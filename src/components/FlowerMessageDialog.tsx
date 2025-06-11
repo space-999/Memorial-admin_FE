@@ -24,7 +24,7 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
 
   useEffect(() => {
     if (message) {
-      setContent(message.content);
+      setContent(message.flowerMessageContent || message.content || '');
     }
   }, [message]);
 

@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/types/admin';
 import { apiClient } from '@/lib/api';
@@ -26,14 +27,14 @@ export const Dashboard: React.FC = () => {
         ]);
 
         const today = new Date().toDateString();
-        const todayLogins = Array.isArray(loginLogs) 
-          ? loginLogs.filter((log: any) => new Date(log.loginTime).toDateString() === today).length 
+        const todayLogins = Array.isArray(loginLogs?.data?.content) 
+          ? loginLogs.data.content.filter((log: any) => new Date(log.loginTime).toDateString() === today).length 
           : 0;
 
         setStats({
-          totalFlowerMessages: Array.isArray(flowerMessages) ? flowerMessages.length : 0,
-          totalLeafMessages: Array.isArray(leafMessages) ? leafMessages.length : 0,
-          totalAdmins: Array.isArray(adminAccounts) ? adminAccounts.length : 0,
+          totalFlowerMessages: flowerMessages?.data?.content?.length || 0,
+          totalLeafMessages: leafMessages?.data?.content?.length || 0,
+          totalAdmins: Array.isArray(adminAccounts?.data) ? adminAccounts.data.length : 0,
           todayLogins,
         });
       } catch (error) {
@@ -155,30 +156,30 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">
-              <a 
-                href="/flower-messages" 
+              <Link 
+                to="/flower-messages" 
                 className="text-sm text-primary hover:underline"
               >
                 → 꽃 메시지 관리
-              </a>
-              <a 
-                href="/leaf-messages" 
+              </Link>
+              <Link 
+                to="/leaf-messages" 
                 className="text-sm text-primary hover:underline"
               >
                 → 나뭇잎 메시지 관리
-              </a>
-              <a 
-                href="/admin-accounts" 
+              </Link>
+              <Link 
+                to="/admin-accounts" 
                 className="text-sm text-primary hover:underline"
               >
                 → 관리자 계정 관리
-              </a>
-              <a 
-                href="/logs" 
+              </Link>
+              <Link 
+                to="/logs" 
                 className="text-sm text-primary hover:underline"
               >
                 → 시스템 로그 확인
-              </a>
+              </Link>
             </div>
           </CardContent>
         </Card>

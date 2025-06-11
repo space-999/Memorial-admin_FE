@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
@@ -11,26 +12,55 @@ import { Eye, Edit, Trash2 } from 'lucide-react';
 import { AdminMessageSearchCondition } from '@/types/admin';
 
 export const FlowerMessages = () => {
-  const [filters, setFilters] = useState<AdminMessageSearchCondition>({
-    searchKeyword: '',
-    startDate: '',
-    endDate: '',
-    deleteFlag: ''
-  });
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [deleteFlag, setDeleteFlag] = useState<'Y' | 'N' | ''>('');
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
 
   const { data: messagesData, isLoading, error, refetch } = useQuery({
-    queryKey: ['flowerMessages', filters],
+    queryKey: ['flowerMessages', searchKeyword, startDate, endDate, deleteFlag],
     queryFn: () => {
-      console.log('Fetching flower messages with filters:', filters);
-      return apiClient.getFlowerMessages(filters);
+      console.log('Fetching flower messages with filters:', {
+        searchKeyword,
+        startDate,
+        endDate,
+        deleteFlag
+      });
+      
+      const condition: AdminMessageSearchCondition = {
+        searchKeyword: searchKeyword || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+        deleteFlag: deleteFlag || undefined
+      };
+      
+      const pageable = { page: 0, size: 100 };
+      return apiClient.getFlowerMessages(condition, pageable);
     },
   });
 
-  const handleSearch = (newFilters: AdminMessageSearchCondition) => {
-    setFilters(newFilters);
+  const handleSearch = () => {
+    console.log('Search triggered with filters:', {
+      searchKeyword,
+      startDate,
+      endDate,
+      deleteFlag
+    });
+    refetch();
+  };
+
+  const handleReset = () => {
+    console.log('Reset filters');
+    setSearchKeyword('');
+    setStartDate('');
+    setEndDate('');
+    setDeleteFlag('');
+    setTimeout(() => {
+      refetch();
+    }, 100);
   };
 
   const handleViewMessage = (message: any) => {
@@ -58,7 +88,7 @@ export const FlowerMessages = () => {
     if (!selectedMessage) return;
     
     try {
-      await apiClient.updateFlowerMessage(selectedMessage.flowerMessageId, data.content);
+      await apiClient.updateFlowerMessage(selectedMessage.flowerMessageId, { content: data.content });
       setIsDialogOpen(false);
       refetch();
     } catch (error) {
@@ -94,7 +124,19 @@ export const FlowerMessages = () => {
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">꽃 메시지 관리</h1>
       
-      <SearchFilters onSearch={handleSearch} />
+      <SearchFilters
+        searchKeyword={searchKeyword}
+        onSearchKeywordChange={setSearchKeyword}
+        startDate={startDate}
+        onStartDateChange={setStartDate}
+        endDate={endDate}
+        onEndDateChange={setEndDate}
+        deleteFlag={deleteFlag}
+        onDeleteFlagChange={(value) => setDeleteFlag(value as 'Y' | 'N' | '')}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        showDeleteFlag={true}
+      />
 
       <Card>
         <CardHeader>
@@ -170,7 +212,6 @@ export const FlowerMessages = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         message={selectedMessage}
-        mode={dialogMode}
         onSave={handleSaveMessage}
       />
     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
@@ -97,7 +96,7 @@ export const FlowerMessages = () => {
       console.error('Failed to delete message:', error);
       toast({
         title: '삭제 실패',
-        description: error?.response?.data?.message || error?.message || '메시지 삭제에 실패했습니다.',
+        description: error?.message || '메시지 삭제에 실패했습니다.',
         variant: 'destructive',
       });
     }
@@ -122,7 +121,7 @@ export const FlowerMessages = () => {
       console.error('Failed to update message:', error);
       toast({
         title: '수정 실패',
-        description: error?.response?.data?.message || error?.message || '메시지 수정에 실패했습니다.',
+        description: error?.message || '메시지 수정에 실패했습니다.',
         variant: 'destructive',
       });
     }
@@ -154,10 +153,16 @@ export const FlowerMessages = () => {
       console.error('Failed to download excel:', error);
       toast({
         title: '다운로드 실패',
-        description: error?.response?.data?.message || error?.message || '엑셀 다운로드에 실패했습니다.',
+        description: error?.message || '엑셀 다운로드에 실패했습니다.',
         variant: 'destructive',
       });
     }
+  };
+
+  // handlePageChange 함수 추가
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // currentPage가 useQuery의 queryKey에 포함되어 있어 자동으로 데이터 재요청이 트리거됩니다.
   };
 
   if (isLoading) {
@@ -169,9 +174,11 @@ export const FlowerMessages = () => {
   }
 
   if (error) {
+    // 에러 발생 시 백엔드에서 받은 에러 메시지를 표시
+    const errorMessage = (error as any)?.response?.data?.message || (error as any)?.message || '알 수 없는 오류가 발생했습니다.';
     return (
       <div className="text-center text-red-500 p-4">
-        메시지를 불러오는데 실패했습니다.
+        메시지를 불러오는데 실패했습니다: {errorMessage}
       </div>
     );
   }

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AdminFlowerMessageResponseDto } from '@/types/admin';
+import { useToast } from '@/hooks/use-toast';
 
 interface FlowerMessageDialogProps {
   message: AdminFlowerMessageResponseDto | null;
@@ -23,6 +24,7 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
 }) => {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (message) {
@@ -37,6 +39,13 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
     setLoading(true);
     try {
       await onSave({ content });
+    } catch (error: any) {
+      console.error('Failed to save message:', error);
+      toast({
+        title: '저장 실패',
+        description: error?.response?.data?.message || error?.message || '메시지 저장에 실패했습니다.',
+        variant: 'destructive',
+      });
     } finally {
       setLoading(false);
     }

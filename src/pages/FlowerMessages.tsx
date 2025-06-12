@@ -80,11 +80,26 @@ export const FlowerMessages = () => {
   };
 
   const handleDeleteMessage = async (messageId: number) => {
+    if (!confirm('정말 삭제하시겠습니까?')) return;
+
     try {
-      await apiClient.deleteFlowerMessage(messageId);
-      refetch();
-    } catch (error) {
+      const response = await apiClient.deleteFlowerMessage(messageId);
+      if (response && response.success) {
+        toast({
+          title: '삭제 완료',
+          description: '꽃 메시지가 삭제되었습니다.',
+        });
+        refetch();
+      } else {
+        throw new Error(response?.message || '삭제에 실패했습니다.');
+      }
+    } catch (error: any) {
       console.error('Failed to delete message:', error);
+      toast({
+        title: '삭제 실패',
+        description: error?.response?.data?.message || error?.message || '메시지 삭제에 실패했습니다.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -92,16 +107,25 @@ export const FlowerMessages = () => {
     if (!selectedMessage) return;
     
     try {
-      await apiClient.updateFlowerMessage(selectedMessage.id, { content: data.content });
-      setIsDialogOpen(false);
-      refetch();
-    } catch (error) {
+      const response = await apiClient.updateFlowerMessage(selectedMessage.id, { content: data.content });
+      if (response && response.success) {
+        toast({
+          title: '수정 완료',
+          description: '꽃 메시지가 수정되었습니다.',
+        });
+        setIsDialogOpen(false);
+        refetch();
+      } else {
+        throw new Error(response?.message || '수정에 실패했습니다.');
+      }
+    } catch (error: any) {
       console.error('Failed to update message:', error);
+      toast({
+        title: '수정 실패',
+        description: error?.response?.data?.message || error?.message || '메시지 수정에 실패했습니다.',
+        variant: 'destructive',
+      });
     }
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const handleDownloadExcel = async () => {
@@ -126,11 +150,11 @@ export const FlowerMessages = () => {
         title: '다운로드 완료',
         description: '꽃 메시지 목록이 엑셀 파일로 다운로드되었습니다.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to download excel:', error);
       toast({
         title: '다운로드 실패',
-        description: '엑셀 다운로드에 실패했습니다.',
+        description: error?.response?.data?.message || error?.message || '엑셀 다운로드에 실패했습니다.',
         variant: 'destructive',
       });
     }

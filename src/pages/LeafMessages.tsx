@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -77,13 +76,13 @@ export const LeafMessages: React.FC = () => {
         });
         refetch();
       } else {
-        throw new Error('삭제에 실패했습니다.');
+        throw new Error(response?.message || '삭제에 실패했습니다.');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete message:', error);
       toast({
         title: '삭제 실패',
-        description: '메시지 삭제에 실패했습니다.',
+        description: error?.response?.data?.message || error?.message || '메시지 삭제에 실패했습니다.',
         variant: 'destructive',
       });
     }
@@ -111,11 +110,11 @@ export const LeafMessages: React.FC = () => {
         title: '다운로드 완료',
         description: '나뭇잎 메시지 목록이 엑셀 파일로 다운로드되었습니다.',
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to download excel:', error);
       toast({
         title: '다운로드 실패',
-        description: '엑셀 다운로드에 실패했습니다.',
+        description: error?.response?.data?.message || error?.message || '엑셀 다운로드에 실패했습니다.',
         variant: 'destructive',
       });
     }

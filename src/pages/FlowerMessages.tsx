@@ -8,9 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Eye, Edit, Trash2, Download } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { AdminMessageSearchCondition } from '@/types/admin';
+import { useToast } from '@/hooks/use-toast';
 
 export const FlowerMessages = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -21,6 +22,7 @@ export const FlowerMessages = () => {
   const [dialogMode, setDialogMode] = useState<'view' | 'edit'>('view');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize] = useState(20);
+  const { toast } = useToast();
 
   const { data: messagesData, isLoading, error, refetch } = useQuery({
     queryKey: ['flowerMessages', searchKeyword, startDate, endDate, currentPage],
@@ -33,6 +35,7 @@ export const FlowerMessages = () => {
       });
       
       const condition: AdminMessageSearchCondition = {
+        messageType: 'FLOWER',
         searchKeyword: searchKeyword || undefined,
         startDate: startDate || undefined,
         endDate: endDate || undefined
@@ -101,6 +104,38 @@ export const FlowerMessages = () => {
     setCurrentPage(page);
   };
 
+  const handleDownloadExcel = async () => {
+    try {
+      const condition: AdminMessageSearchCondition = {
+        messageType: 'FLOWER',
+        searchKeyword: searchKeyword || undefined,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
+      };
+      const blob = await apiClient.downloadMessagesExcel(condition);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `flower_messages_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: '다운로드 완료',
+        description: '꽃 메시지 목록이 엑셀 파일로 다운로드되었습니다.',
+      });
+    } catch (error) {
+      console.error('Failed to download excel:', error);
+      toast({
+        title: '다운로드 실패',
+        description: '엑셀 다운로드에 실패했습니다.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -119,17 +154,20 @@ export const FlowerMessages = () => {
 
   console.log('Flower messages response:', messagesData);
 
-  const messages = messagesData?.data?.data?.content || [];
-  const totalPages = messagesData?.data?.data?.totalPages || 0;
-  const totalElements = messagesData?.data?.data?.totalElements || 0;
-  
-  if (messages.length === 0 && totalElements === 0) {
-    console.log('No content in response or invalid response structure');
-  }
+  // API 명세서에 따라 ApiResponse<PageResponse<...>> 구조로 수정
+  const messages = messagesData?.data?.content || [];
+  const totalPages = messagesData?.data?.totalPages || 0;
+  const totalElements = messagesData?.data?.totalElements || 0;
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold">꽃 메시지 관리</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-3xl font-bold">꽃 메시지 관리</h1>
+        <Button onClick={handleDownloadExcel}>
+          <Download className="mr-2 h-4 w-4" />
+          엑셀 다운로드
+        </Button>
+      </div>
       
       <SearchFilters
         searchKeyword={searchKeyword}

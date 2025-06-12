@@ -31,10 +31,9 @@ export const Dashboard: React.FC = () => {
           : 0;
 
         setStats({
-          // 꽃 메시지는 ApiResponse.data.data.totalElements 사용
-          totalFlowerMessages: flowerMessages?.data?.data?.totalElements || 0,
-          // 나뭇잎 메시지도 ApiResponse.data.data.totalElements 사용
-          totalLeafMessages: leafMessages?.data?.data?.totalElements || 0,
+          // API 명세서에 따라 ApiResponse<PageResponse<...>> 구조로 수정
+          totalFlowerMessages: flowerMessages?.data?.totalElements || 0,
+          totalLeafMessages: leafMessages?.data?.totalElements || 0,
           totalAdmins: Array.isArray(adminAccounts?.data) ? adminAccounts.data.length : 0,
           todayLogins,
         });

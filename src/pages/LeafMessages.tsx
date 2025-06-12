@@ -141,9 +141,10 @@ export const LeafMessages: React.FC = () => {
     );
   }
 
-  const messages = messagesData?.data?.data?.content || [];
-  const totalPages = messagesData?.data?.data?.totalPages || 0;
-  const totalElements = messagesData?.data?.data?.totalElements || 0;
+  // API 명세서에 따라 ApiResponse<PageResponse<...>> 구조로 수정
+  const messages = messagesData?.data?.content || [];
+  const totalPages = messagesData?.data?.totalPages || 0;
+  const totalElements = messagesData?.data?.totalElements || 0;
 
   return (
     <div className="space-y-6">

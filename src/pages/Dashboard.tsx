@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,9 +31,10 @@ export const Dashboard: React.FC = () => {
           : 0;
 
         setStats({
-          // 꽃 메시지는 ApiResponse.data.totalElements 사용
-          totalFlowerMessages: flowerMessages?.data?.totalElements || 0,
-          totalLeafMessages: leafMessages?.data?.content?.length || 0,
+          // 꽃 메시지는 ApiResponse.data.data.totalElements 사용
+          totalFlowerMessages: flowerMessages?.data?.data?.totalElements || 0,
+          // 나뭇잎 메시지도 ApiResponse.data.data.totalElements 사용
+          totalLeafMessages: leafMessages?.data?.data?.totalElements || 0,
           totalAdmins: Array.isArray(adminAccounts?.data) ? adminAccounts.data.length : 0,
           todayLogins,
         });

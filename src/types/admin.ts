@@ -227,7 +227,7 @@ export interface PageResponseWithSpring<T> {
   empty: boolean;
 }
 
-// 꽃 메시지용 별도 PageResponse (ApiResponse로 감싸지지 않음)
+// API 명세서에 맞는 꽃 메시지 응답 타입 (ApiResponse로 감싸진 형태)
 export interface FlowerMessagePageResponse {
   content: AdminFlowerMessageResponseDto[];
   totalPages: number;

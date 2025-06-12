@@ -32,7 +32,8 @@ export const Dashboard: React.FC = () => {
           : 0;
 
         setStats({
-          totalFlowerMessages: flowerMessages?.data?.content?.length || 0,
+          // 꽃 메시지는 ApiResponse.data.totalElements 사용
+          totalFlowerMessages: flowerMessages?.data?.totalElements || 0,
           totalLeafMessages: leafMessages?.data?.content?.length || 0,
           totalAdmins: Array.isArray(adminAccounts?.data) ? adminAccounts.data.length : 0,
           todayLogins,

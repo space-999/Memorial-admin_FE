@@ -78,8 +78,8 @@ class ApiClient {
     });
   }
 
-  // Flower Messages APIs
-  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<FlowerMessagePageResponse> {
+  // Flower Messages APIs - API 명세서에 맞게 ApiResponse로 감싸진 형태 반환
+  async getFlowerMessages(condition: AdminMessageSearchCondition = {}, pageable: Pageable = { page: 0, size: 20 }): Promise<ApiResponse<FlowerMessagePageResponse>> {
     const params = new URLSearchParams();
     
     // 검색 조건을 쿼리 파라미터로 직접 추가 (condition. 접두사 제거)

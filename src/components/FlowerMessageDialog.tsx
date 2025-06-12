@@ -4,12 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { FlowerMessage } from '@/types/admin';
+import { AdminFlowerMessageResponseDto } from '@/types/admin';
 
 interface FlowerMessageDialogProps {
-  message: FlowerMessage | null;
+  message: AdminFlowerMessageResponseDto | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  mode: 'view' | 'edit';
   onSave: (data: { content: string }) => Promise<void>;
 }
 
@@ -17,6 +18,7 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
   message,
   open,
   onOpenChange,
+  mode,
   onSave,
 }) => {
   const [content, setContent] = useState('');
@@ -24,13 +26,14 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
 
   useEffect(() => {
     if (message) {
-      // Set content from either flowerMessageContent or content property
       setContent(message.content || '');
     }
   }, [message]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mode === 'view') return;
+    
     setLoading(true);
     try {
       await onSave({ content });
@@ -43,7 +46,9 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>꽃 메시지 수정</DialogTitle>
+          <DialogTitle>
+            {mode === 'view' ? '꽃 메시지 보기' : '꽃 메시지 수정'}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -56,6 +61,7 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
               maxLength={50}
               placeholder="메시지 내용을 입력하세요 (최대 50자)"
               required
+              readOnly={mode === 'view'}
             />
             <div className="text-xs text-muted-foreground">
               {content.length}/50자
@@ -63,11 +69,13 @@ export const FlowerMessageDialog: React.FC<FlowerMessageDialogProps> = ({
           </div>
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              취소
+              {mode === 'view' ? '닫기' : '취소'}
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? '저장 중...' : '저장'}
-            </Button>
+            {mode === 'edit' && (
+              <Button type="submit" disabled={loading}>
+                {loading ? '저장 중...' : '저장'}
+              </Button>
+            )}
           </div>
         </form>
       </DialogContent>

@@ -109,8 +109,8 @@ export const FlowerMessages = () => {
 
   console.log('Flower messages response:', messagesData);
 
-  // 꽃 메시지는 ApiResponse로 감싸지지 않고 직접 PageResponse 반환
-  const messages = messagesData?.content || [];
+  // API 명세서에 맞게 ApiResponse.data.content로 접근
+  const messages = messagesData?.data?.content || [];
   
   if (messages.length === 0) {
     console.log('No content in response or invalid response structure');
@@ -149,7 +149,6 @@ export const FlowerMessages = () => {
                   <TableHead>작성자</TableHead>
                   <TableHead>내용</TableHead>
                   <TableHead>작성일</TableHead>
-                  <TableHead>상태</TableHead>
                   <TableHead>작업</TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,11 +162,6 @@ export const FlowerMessages = () => {
                     </TableCell>
                     <TableCell>
                       {new Date(message.createdAt).toLocaleDateString('ko-KR')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={message.deleteFlag === 'Y' ? 'destructive' : 'default'}>
-                        {message.deleteFlag === 'Y' ? '삭제됨' : '활성'}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
@@ -206,6 +200,7 @@ export const FlowerMessages = () => {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         message={selectedMessage}
+        mode={dialogMode}
         onSave={handleSaveMessage}
       />
     </div>

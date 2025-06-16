@@ -20,6 +20,7 @@ import {
   PageResponseWithSpring,
   FlowerMessagePageResponse
 } from '@/types/admin';
+import { promises } from 'dns';
 
 const BASE_URL = 'http://localhost:8081';
 
@@ -44,13 +45,24 @@ class ApiClient {
     const url = `${this.baseUrl}${endpoint}`;
     
     const response = await fetch(url, {
-      credentials: 'include',
+      credentials: 'include', // 세션 쿠키 주고받기 위해 필수
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
     });
+
+    // --- START: 세션 만료(401) 처리 로직 추가 ---
+    if (response.status === 401) {
+      // 1. 사용자에게 알림 표시
+      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
+      // 2. 로그인 페이지 리다이렉션 (replace로 히스토리 미생성)
+      window.location.replace('/login');
+      // 3. 이후의 코드 실행 막고 에러 전파 중단 (Promise)
+      return new Promise(() => {});
+    }
+    // --- END: 세션 만료 처리 로직 추가 ---
 
     if (!response.ok) {
       throw new ApiError(response.status, `API Error: ${response.status}`);

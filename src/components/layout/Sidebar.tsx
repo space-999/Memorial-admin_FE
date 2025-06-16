@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -14,14 +15,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { canManageAdmins, canViewLogs, getGradeName } from '@/utils/permissions';
 
-const navigation = [
-  { name: '대시보드', href: '/admin/dashboard', icon: Home },
-  { name: '꽃 메시지', href: '/admin/flower-messages', icon: Book },
-  { name: '나뭇잎 메시지', href: '/admin/leaf-messages', icon: FileText },
-  { name: '관리자 계정', href: '/admin/admin-accounts', icon: Users },
-  { name: '로그 관리', href: '/admin/logs', icon: Settings },
-  { name: '마이페이지', href: '/admin/my-profile', icon: User },
+const allNavigation = [
+  { name: '대시보드', href: '/admin/dashboard', icon: Home, requiresGrade: 0 },
+  { name: '꽃 메시지', href: '/admin/flower-messages', icon: Book, requiresGrade: 0 },
+  { name: '나뭇잎 메시지', href: '/admin/leaf-messages', icon: FileText, requiresGrade: 0 },
+  { name: '관리자 계정', href: '/admin/admin-accounts', icon: Users, requiresGrade: 2 },
+  { name: '로그 관리', href: '/admin/logs', icon: Settings, requiresGrade: 2 },
+  { name: '마이페이지', href: '/admin/my-profile', icon: User, requiresGrade: 0 },
 ];
 
 export const Sidebar: React.FC = () => {
@@ -42,15 +44,11 @@ export const Sidebar: React.FC = () => {
     }
   };
 
-  const getGradeName = (grade: number): string => {
-    switch (grade) {
-      case 0: return 'VIEWER';
-      case 1: return 'EDITOR';
-      case 2: return 'MANAGER';
-      case 3: return 'SUPER_ADMIN';
-      default: return 'UNKNOWN';
-    }
-  };
+  // 사용자 권한에 따라 네비게이션 필터링
+  const navigation = allNavigation.filter(item => {
+    if (!user) return false;
+    return user.adminGrade >= item.requiresGrade;
+  });
 
   return (
     <div className="flex h-full w-64 flex-col bg-card border-r">

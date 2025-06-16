@@ -6,8 +6,11 @@ import { DashboardStats } from '@/types/admin';
 import { apiClient } from '@/lib/api';
 import { Users, FileText, Book, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { canViewAdminStats, canManageAdmins, canViewLogs } from '@/utils/permissions';
 
 export const Dashboard: React.FC = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats>({
     totalFlowerMessages: 0,
     totalLeafMessages: 0,
@@ -46,25 +49,28 @@ export const Dashboard: React.FC = () => {
           console.error('Failed to fetch leaf messages:', error);
         }
 
-        try {
-          const adminAccounts = await apiClient.getAdminAccounts();
-          if (adminAccounts?.success && adminAccounts.data) {
-            statsData.totalAdmins = Array.isArray(adminAccounts.data) ? adminAccounts.data.length : 0;
+        // 관리자 통계는 권한이 있는 경우에만 가져옴
+        if (canViewAdminStats(user)) {
+          try {
+            const adminAccounts = await apiClient.getAdminAccounts();
+            if (adminAccounts?.success && adminAccounts.data) {
+              statsData.totalAdmins = Array.isArray(adminAccounts.data) ? adminAccounts.data.length : 0;
+            }
+          } catch (error) {
+            console.error('Failed to fetch admin accounts:', error);
           }
-        } catch (error) {
-          console.error('Failed to fetch admin accounts:', error);
-        }
 
-        try {
-          const loginLogs = await apiClient.getLoginLogs();
-          if (loginLogs?.success && loginLogs.data?.content) {
-            const today = new Date().toDateString();
-            statsData.todayLogins = loginLogs.data.content.filter((log: any) => 
-              new Date(log.loginTime).toDateString() === today
-            ).length;
+          try {
+            const loginLogs = await apiClient.getLoginLogs();
+            if (loginLogs?.success && loginLogs.data?.content) {
+              const today = new Date().toDateString();
+              statsData.todayLogins = loginLogs.data.content.filter((log: any) => 
+                new Date(log.loginTime).toDateString() === today
+              ).length;
+            }
+          } catch (error) {
+            console.error('Failed to fetch login logs:', error);
           }
-        } catch (error) {
-          console.error('Failed to fetch login logs:', error);
         }
 
         setStats(statsData);
@@ -81,15 +87,16 @@ export const Dashboard: React.FC = () => {
     };
 
     fetchStats();
-  }, [toast]);
+  }, [toast, user]);
 
-  const statCards = [
+  const allStatCards = [
     {
       title: '꽃 메시지',
       value: stats.totalFlowerMessages,
       description: '총 등록된 꽃 메시지 수',
       icon: Book,
       color: 'text-pink-600',
+      requiresPermission: false,
     },
     {
       title: '나뭇잎 메시지',
@@ -97,6 +104,7 @@ export const Dashboard: React.FC = () => {
       description: '총 등록된 나뭇잎 메시지 수',
       icon: FileText,
       color: 'text-green-600',
+      requiresPermission: false,
     },
     {
       title: '관리자 계정',
@@ -104,6 +112,7 @@ export const Dashboard: React.FC = () => {
       description: '총 관리자 계정 수',
       icon: Users,
       color: 'text-blue-600',
+      requiresPermission: true,
     },
     {
       title: '오늘 로그인',
@@ -111,15 +120,33 @@ export const Dashboard: React.FC = () => {
       description: '오늘 로그인한 관리자 수',
       icon: Calendar,
       color: 'text-purple-600',
+      requiresPermission: true,
     },
   ];
+
+  // 권한에 따라 통계 카드 필터링
+  const statCards = allStatCards.filter(card => 
+    !card.requiresPermission || canViewAdminStats(user)
+  );
+
+  const allQuickActions = [
+    { name: '꽃 메시지 관리', href: '/admin/flower-messages', requiresPermission: false },
+    { name: '나뭇잎 메시지 관리', href: '/admin/leaf-messages', requiresPermission: false },
+    { name: '관리자 계정 관리', href: '/admin/admin-accounts', requiresPermission: true, checkFn: canManageAdmins },
+    { name: '시스템 로그 확인', href: '/admin/logs', requiresPermission: true, checkFn: canViewLogs },
+  ];
+
+  // 권한에 따라 빠른 작업 필터링
+  const quickActions = allQuickActions.filter(action => 
+    !action.requiresPermission || (action.checkFn && action.checkFn(user))
+  );
 
   if (loading) {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">대시보드</h1>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(statCards.length)].map((_, i) => (
             <Card key={i}>
               <CardContent className="p-6">
                 <div className="animate-pulse space-y-3">
@@ -192,30 +219,15 @@ export const Dashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid gap-2">
-              <Link 
-                to="/admin/flower-messages" 
-                className="text-sm text-primary hover:underline"
-              >
-                → 꽃 메시지 관리
-              </Link>
-              <Link 
-                to="/admin/leaf-messages" 
-                className="text-sm text-primary hover:underline"
-              >
-                → 나뭇잎 메시지 관리
-              </Link>
-              <Link 
-                to="/admin/admin-accounts" 
-                className="text-sm text-primary hover:underline"
-              >
-                → 관리자 계정 관리
-              </Link>
-              <Link 
-                to="/admin/logs" 
-                className="text-sm text-primary hover:underline"
-              >
-                → 시스템 로그 확인
-              </Link>
+              {quickActions.map((action) => (
+                <Link 
+                  key={action.name}
+                  to={action.href} 
+                  className="text-sm text-primary hover:underline"
+                >
+                  → {action.name}
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>

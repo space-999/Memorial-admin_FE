@@ -16,12 +16,12 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const navigation = [
-  { name: '대시보드', href: '/dashboard', icon: Home },
-  { name: '꽃 메시지', href: '/flower-messages', icon: Book },
-  { name: '나뭇잎 메시지', href: '/leaf-messages', icon: FileText },
-  { name: '관리자 계정', href: '/admin-accounts', icon: Users },
-  { name: '로그 관리', href: '/logs', icon: Settings },
-  { name: '마이페이지', href: '/my-profile', icon: User },
+  { name: '대시보드', href: '/admin/dashboard', icon: Home },
+  { name: '꽃 메시지', href: '/admin/flower-messages', icon: Book },
+  { name: '나뭇잎 메시지', href: '/admin/leaf-messages', icon: FileText },
+  { name: '관리자 계정', href: '/admin/admin-accounts', icon: Users },
+  { name: '로그 관리', href: '/admin/logs', icon: Settings },
+  { name: '마이페이지', href: '/admin/my-profile', icon: User },
 ];
 
 export const Sidebar: React.FC = () => {

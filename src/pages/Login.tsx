@@ -53,7 +53,7 @@ export const Login: React.FC = () => {
           title: '로그인 성공',
           description: `환영합니다, ${response.data.adminNickName}님!`,
         });
-        navigate('/dashboard');
+        navigate('/admin/dashboard');
       } else {
         throw new Error(response.message || '로그인에 실패했습니다.');
       }

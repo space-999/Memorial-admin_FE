@@ -53,19 +53,29 @@ class ApiClient {
       ...options,
     });
 
-    // --- START: 세션 만료(401) 처리 로직 추가 ---
-    if (response.status === 401) {
-      // 1. 사용자에게 알림 표시
-      alert('세션이 만료되었습니다. 다시 로그인해주세요.');
-      // 2. 로그인 페이지 리다이렉션 (replace로 히스토리 미생성)
-      window.location.replace('/login');
-      // 3. 이후의 코드 실행 막고 에러 전파 중단 (Promise)
-      return new Promise(() => {});
-    }
-    // --- END: 세션 만료 처리 로직 추가 ---
-
     if (!response.ok) {
-      throw new ApiError(response.status, `API Error: ${response.status}`);
+      // 1. 에러 응답의 상세 내용을 먼저 추출 시도
+      let errorData;
+      try {
+        errorData = await response.json();
+      } catch (e) {
+        // 응답 본문이 비어있거나 JSON 형식이 아닐 경우 대비
+        errorData = { message: `서버 오류: ${response.statusText || response.status}` };
+      }
+      
+      const errorMessage = errorData.message || '알 수 없는 오류가 발생했습니다.';
+
+      // 2. '세션 만료' 케이스를 전역에서 처리
+      // 상태 코드가 401이고, 메시지에 특정 키워드가 포함된 경우에만 해당
+      if (response.status === 401 && (errorMessage.includes('세션') || errorMessage.includes('만료') || errorMessage.includes('유효하지 않음'))) {
+        alert('세션이 만료되었거나 유효하지 않습니다. 다시 로그인해주세요.');
+        window.location.replace('/login'); // 프론트엔드 로그인 페이지 경로
+        return new Promise(() => {}); // 다른 코드 실행 중단
+      }
+      
+      // 3. 그 외 모든 에러는 구체적인 메시지와 함께 상위로 전달
+      // (예: 비밀번호 불일치, 존재하지 않는 ID 등)
+      throw new ApiError(response.status, errorMessage);
     }
 
     const contentType = response.headers.get('content-type');

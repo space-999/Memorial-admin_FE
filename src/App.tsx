@@ -26,16 +26,17 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             <Route 
-              path="/" 
+              path="/admin" 
               element={
                 <ProtectedRoute>
                   <AdminLayout />
                 </ProtectedRoute>
               }
             >
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route index element={<Navigate to="/admin/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="flower-messages" element={<FlowerMessages />} />
               <Route path="leaf-messages" element={<LeafMessages />} />

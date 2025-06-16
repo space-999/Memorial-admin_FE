@@ -16,7 +16,7 @@ const NotFound = () => {
           </p>
         </div>
         <Button asChild>
-          <Link to="/dashboard">
+          <Link to="/admin/dashboard">
             <Home className="mr-2 h-4 w-4" />
             대시보드로 돌아가기
           </Link>

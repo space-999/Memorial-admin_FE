@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DashboardStats } from '@/types/admin';
 import { apiClient } from '@/lib/api';
 import { Users, FileText, Book, Calendar } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 export const Dashboard: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats>({
@@ -13,39 +15,73 @@ export const Dashboard: React.FC = () => {
     todayLogins: 0,
   });
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // 각 API에서 데이터를 가져와서 통계 계산
-        const [flowerMessages, leafMessages, adminAccounts, loginLogs] = await Promise.all([
-          apiClient.getFlowerMessages(),
-          apiClient.getLeafMessages(),
-          apiClient.getAdminAccounts(),
-          apiClient.getLoginLogs(),
-        ]);
+        const statsData = {
+          totalFlowerMessages: 0,
+          totalLeafMessages: 0,
+          totalAdmins: 0,
+          todayLogins: 0,
+        };
 
-        const today = new Date().toDateString();
-        const todayLogins = Array.isArray(loginLogs?.data?.content) 
-          ? loginLogs.data.content.filter((log: any) => new Date(log.loginTime).toDateString() === today).length 
-          : 0;
+        // 각 API 호출을 개별적으로 처리하여 일부 실패해도 다른 데이터는 가져올 수 있도록 함
+        try {
+          const flowerMessages = await apiClient.getFlowerMessages();
+          if (flowerMessages?.success && flowerMessages.data) {
+            statsData.totalFlowerMessages = flowerMessages.data.totalElements || 0;
+          }
+        } catch (error) {
+          console.error('Failed to fetch flower messages:', error);
+        }
 
-        setStats({
-          // API 명세서에 따라 ApiResponse<PageResponse<...>> 구조로 수정
-          totalFlowerMessages: flowerMessages?.data?.totalElements || 0,
-          totalLeafMessages: leafMessages?.data?.totalElements || 0,
-          totalAdmins: Array.isArray(adminAccounts?.data) ? adminAccounts.data.length : 0,
-          todayLogins,
-        });
+        try {
+          const leafMessages = await apiClient.getLeafMessages();
+          if (leafMessages?.success && leafMessages.data) {
+            statsData.totalLeafMessages = leafMessages.data.totalElements || 0;
+          }
+        } catch (error) {
+          console.error('Failed to fetch leaf messages:', error);
+        }
+
+        try {
+          const adminAccounts = await apiClient.getAdminAccounts();
+          if (adminAccounts?.success && adminAccounts.data) {
+            statsData.totalAdmins = Array.isArray(adminAccounts.data) ? adminAccounts.data.length : 0;
+          }
+        } catch (error) {
+          console.error('Failed to fetch admin accounts:', error);
+        }
+
+        try {
+          const loginLogs = await apiClient.getLoginLogs();
+          if (loginLogs?.success && loginLogs.data?.content) {
+            const today = new Date().toDateString();
+            statsData.todayLogins = loginLogs.data.content.filter((log: any) => 
+              new Date(log.loginTime).toDateString() === today
+            ).length;
+          }
+        } catch (error) {
+          console.error('Failed to fetch login logs:', error);
+        }
+
+        setStats(statsData);
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error);
+        toast({
+          title: '일부 데이터 로드 실패',
+          description: '권한이 없는 데이터가 있을 수 있습니다.',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchStats();
-  }, []);
+  }, [toast]);
 
   const statCards = [
     {
@@ -157,25 +193,25 @@ export const Dashboard: React.FC = () => {
           <CardContent>
             <div className="grid gap-2">
               <Link 
-                to="/flower-messages" 
+                to="/admin/flower-messages" 
                 className="text-sm text-primary hover:underline"
               >
                 → 꽃 메시지 관리
               </Link>
               <Link 
-                to="/leaf-messages" 
+                to="/admin/leaf-messages" 
                 className="text-sm text-primary hover:underline"
               >
                 → 나뭇잎 메시지 관리
               </Link>
               <Link 
-                to="/admin-accounts" 
+                to="/admin/admin-accounts" 
                 className="text-sm text-primary hover:underline"
               >
                 → 관리자 계정 관리
               </Link>
               <Link 
-                to="/logs" 
+                to="/admin/logs" 
                 className="text-sm text-primary hover:underline"
               >
                 → 시스템 로그 확인

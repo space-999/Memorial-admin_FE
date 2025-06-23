@@ -26,7 +26,7 @@
 
 ## 해당 기능은 러버블을 이용하여 제작하였습니다.
 
-**URL**: https://lovable.dev/projects/d2eea1c1-d00c-43fc-bd5d-f2e4f8c8b58f
+**URL**: https://lovable.dev/projects/0aea0db9-2875-4d5e-954e-14bf09dba693
 
 ## 🚀 시작하기
 
